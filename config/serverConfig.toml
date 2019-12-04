@@ -1,0 +1,34 @@
+[serverConfig]
+
+    ServerPort = "8000" #Required to input as string
+    ServerAddr = "192.168.1.7" #Put in the IP address you want to bind to as string
+    #Relative or absolute path accepted, the server will convert any relative path to an absolute path.
+    DefaultIngressPath = 'ingress' #default path that the server will scan for new documents
+    DocumentFileSystemLocation = 'documents'
+
+[authentication]
+    WebUIAuth = false # bool, if false no authentication is required for the webUI
+    WebUIUser = "admin"
+    WebUIPassword = "Password1"
+
+[reverseProxy]
+    #This is for setting up goTorrent behind a reverse Proxy (with SSL)
+    ProxyEnabled = false #bool, either false or true
+    #URL is CASE SENSITIVE
+    BaseURL = "domain.com/subroute/"  # MUST be in the format (if you have a subdomain, and must have trailing slash) "yoursubdomain.domain.org/subroute/"
+
+[logging]
+
+    Level = "debug" #debug, info, warn, error, fatal
+    Encoding = "console" #JSON, console
+    OutputPaths = ["stdout", "console"]
+    ErrorOutPutPaths = ["stderr"]
+
+[scheduling]
+    #number of minutes between scans of the ingress folder
+    IngressInterval = 5
+
+[notifications]
+
+    PushBulletToken = "" #add your pushbullet api token here to notify of torrent completion to pushbullet
+
