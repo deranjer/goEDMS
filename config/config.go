@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 
 	"github.com/labstack/gommon/log"
-	"github.com/rs/zerolog"
 	"github.com/spf13/viper"
 	"github.com/ziflex/lecho/v2"
 )
@@ -16,7 +15,7 @@ var Logger *lecho.Logger
 
 //ServerConfig contains all of the server settings defined in the TOML file
 type ServerConfig struct {
-	StormID         int
+	StormID         int `storm:"id"`
 	ListenAddrIP    string
 	ListenAddrPort  string
 	IngressPath     string
@@ -33,7 +32,7 @@ type ServerConfig struct {
 func defaultConfig() ServerConfig { //TODO: Do I even bother, if config fails most likely not worth continuing
 	var ServerConfigDefault ServerConfig
 	//Config.AppVersion
-	zerolog.SetGlobalLevel(zerolog.WarnLevel)
+	//zerolog.SetGlobalLevel(zerolog.WarnLevel)
 	ServerConfigDefault.DocumentPath = "documents"
 	ServerConfigDefault.IngressPath = "ingress"
 	ServerConfigDefault.WebUIPass = false
@@ -62,6 +61,7 @@ func SetupServer() (ServerConfig, *lecho.Logger) {
 	serverConfigLive.ListenAddrPort = viper.GetString("serverConfig.ServerPort")
 	serverConfigLive.ListenAddrIP = viper.GetString("serverConfig.ServerAddr")
 	serverConfigLive.IngressInterval = viper.GetInt("scheduling.IngressInterval")
+	fmt.Println("Ingress Interval: ", serverConfigLive.IngressInterval)
 	return serverConfigLive, logger
 }
 

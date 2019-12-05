@@ -1,6 +1,8 @@
 package database
 
 import (
+	"fmt"
+
 	"github.com/asdine/storm"
 	config "github.com/deranjer/goEDMS/config"
 	"github.com/ziflex/lecho/v2"
@@ -31,6 +33,7 @@ func FetchConfigFromDB(db *storm.DB) config.ServerConfig {
 //WriteConfigToDB writes the serverconfig to the database for later retrieval
 func WriteConfigToDB(serverConfig config.ServerConfig, db *storm.DB) {
 	serverConfig.StormID = 1 //config will be stored in bucket 1
+	fmt.Printf("%+v\n", serverConfig)
 	err := db.Save(&serverConfig)
 	if err != nil {
 		Logger.Error("Unable to write server config to database!", err)

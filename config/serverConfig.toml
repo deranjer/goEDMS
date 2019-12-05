@@ -28,6 +28,11 @@
     #number of minutes between scans of the ingress folder
     IngressInterval = 5
 
+
+[ocr]
+    #Path to Tesseract binary (required for OCR)
+    TesseractBin = "/usr/local/bin/tesseract"
+
 [notifications]
 
     PushBulletToken = "" #add your pushbullet api token here to notify of torrent completion to pushbullet
