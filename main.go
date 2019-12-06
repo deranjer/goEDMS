@@ -35,7 +35,7 @@ func main() {
 	e.Logger = Logger
 	e.Use(lecho.Middleware(lecho.Config{
 		Logger: logger}))
-
+	e.File("/", "frontend/index.html")
 	log.Info("Logger enabled!!")
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%s", serverConfig.ListenAddrPort)))
 }

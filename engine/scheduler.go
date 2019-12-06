@@ -19,7 +19,7 @@ func InitializeSchedules(db *storm.DB) {
 	ingressJob = cron.NewChain(cron.SkipIfStillRunning(cron.DefaultLogger)).Then(ingressJob)
 	serverConfig.IngressInterval = 1
 	//c.AddJob(fmt.Sprintf("@every %dm", serverConfig.IngressInterval), ingressJob)
-	c.AddJob("@every 10s", ingressJob)
+	c.AddJob("@every 5m", ingressJob)
 	Logger.Infof("Adding Ingress Job that runs every %dm", serverConfig.IngressInterval)
 	c.Start()
 
