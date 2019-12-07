@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 
 	"github.com/deranjer/goEDMS/config"
@@ -36,7 +37,7 @@ func ingressJobFunc(serverConfig config.ServerConfig) {
 			wordDocProcessing(file)
 			fallthrough
 		case ".tiff", ".jpg", ".jpeg", ".png":
-			imageProcessing(file)
+			ocrProcessing(file)
 			fallthrough
 		default:
 			Logger.Warn("Invalid file type: ", filepath.Base((file)))
@@ -54,7 +55,7 @@ func pdfProcessing(file string) {
 	if err != nil {
 		fmt.Println("Unable to open PDF", fileName)
 		//Logger.Error("Unable to open PDF", file.Name())
-		//TODO - send to OCR for processing
+		ocrProcessing(file)
 		return
 	}
 	defer pdfFile.Close()
@@ -63,14 +64,15 @@ func pdfProcessing(file string) {
 	if err != nil {
 		fmt.Println("Unable to extract text from PDF", fileName)
 		//Logger.Error("Unable to convert PDF to text", file.Name())
-		//TODO - send to OCR for processing
+		ocrProcessing(file)
 		return
 	}
 	buf.ReadFrom(bytes)
 	fullText := buf.String()
 	if fullText == "" {
-		fmt.Println("text result is empty, send to OCR", fileName)
-		//TODO - send to OCR for processing
+		fmt.Println("text result is empty, send to ocr", fileName)
+		ocrProcessing(file)
+		return
 	}
 	fmt.Println(fullText)
 	return
@@ -84,8 +86,18 @@ func wordDocProcessing(fileName string) {
 
 }
 
-func imageProcessing(fileName string) {
-
+func ocrProcessing(fileName string) {
+	//args := []string{}
+	cmd := exec.Command("tesseract", fileName, "out")
+	var out bytes.Buffer
+	var stderr bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Stderr = &stderr
+	err := cmd.Run()
+	if err != nil {
+		fmt.Println(fmt.Sprint(err) + ": " + stderr.String())
+	}
+	fmt.Println("Result: " + out.String())
 }
 
 func ocrFile(file os.FileInfo) {
