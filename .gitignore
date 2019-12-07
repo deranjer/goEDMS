@@ -1,1 +1,3 @@
 ﻿ingress
+goEDMSBuilds
+.goreleaser.yml

@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/deranjer/goEDMS/config"
 	"github.com/ledongthuc/pdf"
+	"gopkg.in/gographics/imagick.v2/imagick"
 )
 
 func ingressJobFunc(serverConfig config.ServerConfig) {
@@ -37,7 +38,7 @@ func ingressJobFunc(serverConfig config.ServerConfig) {
 			wordDocProcessing(file)
 			fallthrough
 		case ".tiff", ".jpg", ".jpeg", ".png":
-			ocrProcessing(file)
+			//ocrProcessing(file)
 			fallthrough
 		default:
 			Logger.Warn("Invalid file type: ", filepath.Base((file)))
@@ -88,16 +89,57 @@ func wordDocProcessing(fileName string) {
 
 func ocrProcessing(fileName string) {
 	//args := []string{}
-	cmd := exec.Command("tesseract", fileName, "out")
+	Logger.Info("Converting PDF To image for OCR", fileName)
+	imageName := strings.TrimSuffix(fileName, filepath.Ext(fileName))
+	imageName = fmt.Sprint(imageName + ".png")
+	fmt.Println("Outputting image to ", imageName)
+	imagick.Initialize()
+	defer imagick.Terminate()
+
+	mw := imagick.NewMagickWand()
+	defer mw.Destroy()
+	err := mw.SetResolution(300, 300) 
+	if err != nil {
+        return
+    }
+
+
+	err = mw.ReadImage(fileName)
+	if err != nil {
+		panic(err)
+	}
+	
+
+	err = mw.SetImageAlphaChannel(imagick.ALPHA_CHANNEL_FLATTEN) 
+	if err != nil {
+        return
+    }
+
+	err = mw.SetCompressionQuality(95);
+	if err != nil {
+        return 
+    }
+
+	err = mw.SetFormat("jpg")
+	if err != nil {
+		return
+	}
+	//mw.WriteImages()
+	mw.WriteImage(imageName)
+
+
+	
+
+	/* cmd := exec.Command("tesseract", fileName, "out")
 	var out bytes.Buffer
 	var stderr bytes.Buffer
 	cmd.Stdout = &out
 	cmd.Stderr = &stderr
-	err := cmd.Run()
+	err = cmd.Run()
 	if err != nil {
 		fmt.Println(fmt.Sprint(err) + ": " + stderr.String())
-	}
-	fmt.Println("Result: " + out.String())
+	} */
+	//fmt.Println("Result: " + out.String())
 }
 
 func ocrFile(file os.FileInfo) {
