@@ -3,8 +3,30 @@
     ServerPort = "8000" #Required to input as string
     ServerAddr = "192.168.1.7" #Put in the IP address you want to bind to as string
     #Relative or absolute path accepted, the server will convert any relative path to an absolute path.
-    DefaultIngressPath = 'ingress' #default path that the server will scan for new documents
-    DocumentFileSystemLocation = 'documents'
+
+    
+
+[documentLibrary]
+    DocumentFileSystemLocation = 'documents' #Location to store documents
+    DefaultNewDocumentFolder = 'New' #default folder that ingressed documents will be placed in
+
+
+[ingress]
+    IngressPath = 'ingress' #default path that the server will scan for new documents
+    [ingress.scheduling]
+        #number of minutes between scans of the ingress folder
+        IngressInterval = 10
+    [ingress.completed]
+        #If True will delete files from ingress folder after processed (will leave ones if they produce error), if false will move to another folder
+        IngressDeleteOnProcess = false 
+        IngressMoveFolder = 'done' #default path that the server will move processed ingress documents to
+
+
+[ocr]
+    #Path to Tesseract binary (required for OCR)
+    TesseractBin = "/usr/local/bin/tesseract"
+    #Path to ImageMagick (required for OCR)
+    MagickBin = "/usr/local/bin/magick"
 
 [authentication]
     WebUIAuth = false # bool, if false no authentication is required for the webUI
@@ -23,15 +45,6 @@
     Encoding = "console" #JSON, console
     OutputPaths = ["stdout", "console"]
     ErrorOutPutPaths = ["stderr"]
-
-[scheduling]
-    #number of minutes between scans of the ingress folder
-    IngressInterval = 5
-
-
-[ocr]
-    #Path to Tesseract binary (required for OCR)
-    TesseractBin = "/usr/local/bin/tesseract"
 
 [notifications]
 

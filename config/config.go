@@ -15,18 +15,21 @@ var Logger *lecho.Logger
 
 //ServerConfig contains all of the server settings defined in the TOML file
 type ServerConfig struct {
-	StormID         int `storm:"id"`
-	ListenAddrIP    string
-	ListenAddrPort  string
-	IngressPath     string
-	DocumentPath    string
-	WebUIPass       bool
-	ClientUsername  string
-	ClientPassword  string
-	PushBulletToken string `json:"-"`
-	UseReverseProxy bool
-	BaseURL         string
-	IngressInterval int
+	StormID           int `storm:"id"`
+	ListenAddrIP      string
+	ListenAddrPort    string
+	IngressPath       string
+	IngressDelete     bool
+	IngressMoveFolder string
+	DocumentPath      string
+	NewDocumentFolder string
+	WebUIPass         bool
+	ClientUsername    string
+	ClientPassword    string
+	PushBulletToken   string `json:"-"`
+	UseReverseProxy   bool
+	BaseURL           string
+	IngressInterval   int
 }
 
 func defaultConfig() ServerConfig { //TODO: Do I even bother, if config fails most likely not worth continuing
@@ -51,8 +54,8 @@ func SetupServer() (ServerConfig, *lecho.Logger) {
 		panic(fmt.Errorf("fatal error config file: %s \n", err))
 	}
 	logger := setupLogging()
-	ingressDir := filepath.ToSlash(viper.GetString("serverConfig.DefaultIngressPath")) //Converting the string literal into a filepath
-	ingressDirAbs, err := filepath.Abs(ingressDir)                                     //Converting to an absolute file path
+	ingressDir := filepath.ToSlash(viper.GetString("ingress.IngressPath")) //Converting the string literal into a filepath
+	ingressDirAbs, err := filepath.Abs(ingressDir)                         //Converting to an absolute file path
 	if err != nil {
 		logger.Error("Failed creating absolute path for ingress directory", err)
 	}
@@ -60,8 +63,24 @@ func SetupServer() (ServerConfig, *lecho.Logger) {
 	logger.Infof("Logger is setup")
 	serverConfigLive.ListenAddrPort = viper.GetString("serverConfig.ServerPort")
 	serverConfigLive.ListenAddrIP = viper.GetString("serverConfig.ServerAddr")
-	serverConfigLive.IngressInterval = viper.GetInt("scheduling.IngressInterval")
+	serverConfigLive.IngressInterval = viper.GetInt("ingress.scheduling.IngressInterval")
+	serverConfigLive.IngressDelete = viper.GetBool("ingress.completed.IngressDeleteOnProcess")
+	ingressMoveFolder := filepath.ToSlash(viper.GetString("ingress.completed.IngressMoveFolder"))
+	ingressMoveFolderABS, err := filepath.Abs(ingressMoveFolder)
+	if err != nil {
+		logger.Error("Failed creating absolute path for ingress move folder", err)
+	}
+	serverConfigLive.IngressMoveFolder = ingressMoveFolderABS
+	os.MkdirAll(ingressMoveFolderABS, os.ModePerm) //creating the directory for moving now
 	fmt.Println("Ingress Interval: ", serverConfigLive.IngressInterval)
+	documentPathRelative := filepath.ToSlash(viper.GetString("documentLibrary.DocumentFileSystemLocation"))
+	serverConfigLive.DocumentPath, err = filepath.Abs(documentPathRelative)
+	if err != nil {
+		logger.Error("Failed creating absolute path for document library", err)
+	}
+	newDocumentPath := filepath.ToSlash(viper.GetString("documentLibrary.DefaultNewDocumentFolder"))
+	serverConfigLive.NewDocumentFolder = filepath.Join(serverConfigLive.DocumentPath, newDocumentPath)
+	os.MkdirAll(serverConfigLive.NewDocumentFolder, os.ModePerm)
 	return serverConfigLive, logger
 }
 

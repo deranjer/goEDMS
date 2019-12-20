@@ -25,17 +25,21 @@ func injectGlobals(logger *lecho.Logger) {
 
 func main() {
 	serverConfig, logger := config.SetupServer()
-	injectGlobals(logger)
+	injectGlobals(logger) //inject the logger into all of the packages
 	db := database.SetupDatabase()
+	database.WriteConfigToDB(serverConfig, db) //Write the config back to the database
+	searchDB, err := database.SetupSearchDB()
+	if err != nil {
+		Logger.Fatal("Unable to setup index database", err)
+	}
 	defer db.Close()
-	database.WriteConfigToDB(serverConfig, db)
-	engine.InitializeSchedules(db)
-
+	database.WriteConfigToDB(serverConfig, db) //writing the config to the database
+	engine.InitializeSchedules(db, searchDB)   //initialize all the cron jobs
 	e := echo.New()
 	e.Logger = Logger
 	e.Use(lecho.Middleware(lecho.Config{
 		Logger: logger}))
-	e.Static("/", "public/built")
+	e.Static("/", "public/built") //serving up the React Frontend
 	log.Info("Logger enabled!!")
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%s", serverConfig.ListenAddrPort)))
 }

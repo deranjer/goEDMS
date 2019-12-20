@@ -2,24 +2,32 @@ package engine
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
+	"github.com/asdine/storm"
+	"github.com/blevesearch/bleve"
 	"github.com/deranjer/goEDMS/config"
+	"github.com/deranjer/goEDMS/database"
 	"github.com/ledongthuc/pdf"
-	"gopkg.in/gographics/imagick.v2/imagick"
 )
 
-func ingressJobFunc(serverConfig config.ServerConfig) {
-	fmt.Println("Testing job func")
+func ingressJobFunc(serverConfig config.ServerConfig, db *storm.DB, searchDB bleve.Index) {
+	//fmt.Println("Testing job func")
 	//serverConfig := database.FetchConfigFromDB(db)
+	serverConfig, err := database.FetchConfigFromDB(db)
+	if err != nil {
+		fmt.Println("FUCKING ERROR READING", err)
+	}
+	var fullText string //The text extraction result whether it is OCR or other method
 	Logger.Info("Starting Ingress Job on folder:", serverConfig.IngressPath)
 	var documentPath []string
-	err := filepath.Walk(serverConfig.IngressPath, func(path string, info os.FileInfo, err error) error {
-		//fullFilePath := filepath.Join(os.Getwd(),
-		fmt.Println("PATH", path)
+	err = filepath.Walk(serverConfig.IngressPath, func(path string, info os.FileInfo, err error) error {
 		documentPath = append(documentPath, path)
 		return nil
 	})
@@ -29,17 +37,30 @@ func ingressJobFunc(serverConfig config.ServerConfig) {
 	for _, file := range documentPath {
 		switch filepath.Ext(file) {
 		case ".pdf":
-			pdfProcessing(file)
-			fallthrough
+			fullText, err = pdfProcessing(file)
+			if err != nil {
+				fullText, err = ocrProcessing(file)
+				if err != nil {
+					Logger.Error("OCR Processing failed on file: ", file, err)
+					continue
+				}
+			}
+			document, err := database.AddNewDocument(file, fullText, db, searchDB)
+			if err != nil {
+				fmt.Println("UNABLE TO ADD NEW DOCUMENT", document, err)
+			}
+			err = ingressCopyDocument(file, serverConfig)
+			if err != nil {
+				Logger.Error("Error moving ingress file to new location! ", file, err)
+			}
+			ingressCleanup(file, serverConfig)
+
 		case ".txt", ".rtf":
 			textProcessing(file)
-			fallthrough
 		case ".doc", ".docx", ".odf":
 			wordDocProcessing(file)
-			fallthrough
 		case ".tiff", ".jpg", ".jpeg", ".png":
-			//ocrProcessing(file)
-			fallthrough
+			ocrProcessing(file)
 		default:
 			Logger.Warn("Invalid file type: ", filepath.Base((file)))
 		}
@@ -48,35 +69,62 @@ func ingressJobFunc(serverConfig config.ServerConfig) {
 
 }
 
-func pdfProcessing(file string) {
+//ingressCopyDocument copies the document to document storage location
+func ingressCopyDocument(fileName string, serverConfig config.ServerConfig) error {
+	srcFile, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		return err
+	}
+	newFileName := serverConfig.NewDocumentFolder + filepath.Base(fileName)
+	err = ioutil.WriteFile(newFileName, srcFile, os.ModePerm)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+//ingressCleanup cleans up the ingress folder after we have handled the documents
+func ingressCleanup(fileName string, serverConfig config.ServerConfig) error {
+	if serverConfig.IngressDelete == true { //deleting the ingress files
+		err := os.Remove(fileName)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+	newFile := serverConfig.IngressMoveFolder + filepath.Base(fileName) //Moving ingress files to another location
+	err := os.Rename(fileName, newFile)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func pdfProcessing(file string) (string, error) {
 	fileName := filepath.Base((file))
-	fmt.Println("WOrking on current file:", fileName)
-	Logger.Debug("Working on current FULL PATH: ", file)
+	var fullText string
+	Logger.Debug("Working on current file: ", fileName)
 	pdfFile, result, err := pdf.Open(file)
 	if err != nil {
-		fmt.Println("Unable to open PDF", fileName)
-		//Logger.Error("Unable to open PDF", file.Name())
-		ocrProcessing(file)
-		return
+		Logger.Error("Unable to open PDF", fileName)
+		return fullText, err
 	}
 	defer pdfFile.Close()
 	var buf bytes.Buffer
 	bytes, err := result.GetPlainText()
 	if err != nil {
-		fmt.Println("Unable to extract text from PDF", fileName)
-		//Logger.Error("Unable to convert PDF to text", file.Name())
-		ocrProcessing(file)
-		return
+		Logger.Error("Unable to convert PDF to text", fileName)
+		return fullText, err
 	}
 	buf.ReadFrom(bytes)
-	fullText := buf.String()
+	fullText = buf.String() //writing from the buffer to the string
 	if fullText == "" {
-		fmt.Println("text result is empty, send to ocr", fileName)
-		ocrProcessing(file)
-		return
+		err = errors.New("PDF Text Result is empty")
+		Logger.Info("PDF Text Result is empty, sending to OCR: ", fileName, err)
+		return fullText, err
 	}
-	fmt.Println(fullText)
-	return
+	Logger.Info("Text processed from PDF without OCR: ", fileName)
+	return fullText, nil
 }
 
 func textProcessing(fileName string) {
@@ -87,61 +135,57 @@ func wordDocProcessing(fileName string) {
 
 }
 
-func ocrProcessing(fileName string) {
-	//args := []string{}
+func ocrProcessing(fileName string) (string, error) {
+	var err error
+	var output []byte
+	var fullText string
 	Logger.Info("Converting PDF To image for OCR", fileName)
 	imageName := strings.TrimSuffix(fileName, filepath.Ext(fileName))
-	imageName = fmt.Sprint(imageName + ".png")
+	imageName = filepath.Base(fmt.Sprint(imageName + ".png"))
+	imageName = filepath.Join("temp", imageName)
+	imageName, err = filepath.Abs(imageName)
+	if err != nil {
+		Logger.Error("Unable to edit absolute path string for temporary image for OCR: ", fileName, err)
+	}
+	err = os.MkdirAll(filepath.Dir(imageName), os.ModePerm)
+	if err != nil {
+		Logger.Error("Unable to create absolute path for temporary image for OCR (permissions?): ", filepath.Dir(imageName), err)
+	}
+	fileName = filepath.Clean(fileName)
+	imageName = filepath.Clean(imageName)
+	fmt.Println("Creating temp image for OCR AT: ", imageName)
+	_, err = os.OpenFile(fileName, os.O_RDWR, 0755)
+	if err != nil {
+		fmt.Println("ERROR FILE ISSUE", err)
+	}
+	convertArgs := []string{"convert", "-density", "150", "-antialias", fileName, "-append", "-resize", "1024x", "-quality", "100", imageName}
+	pdfConvertCmd := exec.Command("magick", convertArgs...)
+	output, err = pdfConvertCmd.Output()
+	if err != nil {
+		Logger.Error("Unable to convert PDF Using Magick: ", fileName, err)
+		return fullText, err
+	}
 	fmt.Println("Outputting image to ", imageName)
-	imagick.Initialize()
-	defer imagick.Terminate()
-
-	mw := imagick.NewMagickWand()
-	defer mw.Destroy()
-	err := mw.SetResolution(300, 300) 
+	//fmt.Println("Output from pdfConvertCmd ", string(output))
+	cleanArgs := []string{"convert", imageName, "-auto-orient", "-deskew", "40%", "-despeckle", imageName}
+	imageCleanCmd := exec.Command("magick", cleanArgs...)
+	output, err = imageCleanCmd.Output()
 	if err != nil {
-        return
-    }
-
-
-	err = mw.ReadImage(fileName)
-	if err != nil {
-		panic(err)
+		Logger.Error("Magick was unable to clean the image for some reason... skipping this file for now: ", fileName, err)
+		return fullText, err
 	}
-	
-
-	err = mw.SetImageAlphaChannel(imagick.ALPHA_CHANNEL_FLATTEN) 
+	//fmt.Println("Output from imageCleanCmd", string(output))
+	tesseractArgs := []string{imageName, "stdout"}
+	tesseractCMD := exec.Command("tesseract", tesseractArgs...) //get the path to tesseract
+	output, err = tesseractCMD.Output()
 	if err != nil {
-        return
-    }
-
-	err = mw.SetCompressionQuality(95);
-	if err != nil {
-        return 
-    }
-
-	err = mw.SetFormat("jpg")
-	if err != nil {
-		return
+		Logger.Error("Tesseract encountered error when attempting to OCR image: ", fileName, err)
+		return fullText, err
 	}
-	//mw.WriteImages()
-	mw.WriteImage(imageName)
-
-
-	
-
-	/* cmd := exec.Command("tesseract", fileName, "out")
-	var out bytes.Buffer
-	var stderr bytes.Buffer
-	cmd.Stdout = &out
-	cmd.Stderr = &stderr
-	err = cmd.Run()
-	if err != nil {
-		fmt.Println(fmt.Sprint(err) + ": " + stderr.String())
-	} */
-	//fmt.Println("Result: " + out.String())
-}
-
-func ocrFile(file os.FileInfo) {
-
+	fullText = string(output)
+	if fullText == "" {
+		Logger.Error("OCR Result returned empty string... OCR'ing the document failed", fileName, err)
+		return fullText, err
+	}
+	return fullText, nil
 }

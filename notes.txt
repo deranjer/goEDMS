@@ -1,12 +1,8 @@
 https://github.com/oklog/ulid
 bleve
-https://github.com/otiai10/gosseract
 rc-tree
 https://github.com/kingzbauer/docx/blob/master/docx.go
 https://github.com/knieriem/odf/blob/master/read.go
 
 convert PDF
 magick convert -density 150 -antialias "Basic_Test.pdf" -append -resize 1024x -quality 100 "Basic_Test_Output.png"
-
-image cleanup
-magick convert "Basic_Test_Output.png" -lat 10x10+15% -fuzz 15% -fill black +opaque white -negate "Basic_Test_Output_Proc.png"
