@@ -3,3 +3,5 @@ goEDMSBuilds
 .goreleaser.yml
 simpleEDMSIndex.bleve
 temp
+documents
+done

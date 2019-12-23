@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"math/rand"
+	"net/http"
 	"os"
 	"path/filepath"
 	"time"
@@ -21,10 +22,11 @@ import (
 type Document struct {
 	StormID      int `storm:"id,increment=100"` //all records start at 100 for the ID and go up
 	Name         string
+	Path         string //full path to the file
 	IngressTime  time.Time
 	Folder       string
 	Hash         string
-	ULID         ulid.ULID //Have a smaller (than hash) id that can be used in URL's, hopefully speed things up
+	ULID         ulid.ULID `storm:"index"` //Have a smaller (than hash) id that can be used in URL's, hopefully speed things up
 	DocumentType string    //type of document (pdf, txt, etc)
 	FullText     string
 }
@@ -85,10 +87,12 @@ func AddNewDocument(fileName string, fullText string, db *storm.DB, searchDB ble
 		return newDocument, err
 	}
 	newDocument.Name = filepath.Base(fileName)
+	newDocument.Path = fileName
 	newDocument.Hash = fileHash
 	newDocument.IngressTime = newTime
 	newDocument.ULID = newULID
-	newDocument.Folder = serverConfig.DocumentPath //TODO change this to default folder in config
+	documentFolder := serverConfig.DocumentPath + "/" + serverConfig.IngressMoveFolder
+	newDocument.Folder = documentFolder
 	newDocument.DocumentType = filepath.Ext(fileName)
 	newDocument.FullText = fullText
 
@@ -101,6 +105,115 @@ func AddNewDocument(fileName string, fullText string, db *storm.DB, searchDB ble
 		Logger.Fatal("Unable to write document to bucket!", err)
 	}
 	return newDocument, err
+}
+
+//FetchNewestDocuments fetches the documents that were added last
+func FetchNewestDocuments(numberOf int, db *storm.DB) ([]Document, error) {
+	var newestDocuments []Document
+	err := db.AllByIndex("StormID", &newestDocuments, storm.Limit(numberOf), storm.Reverse())
+	//err := db.Find("StormID", &newestDocuments, storm.Limit(numberOf), storm.Reverse()) //getting it from the last added
+	if err != nil {
+		Logger.Error("Unable to find the latest documents: ", err)
+		return newestDocuments, err
+	}
+	return newestDocuments, nil
+}
+
+//FetchDocuments fetches an array of documents //TODO: Not fucking needed?
+func FetchDocuments(docULIDSt []string, db *storm.DB) ([]Document, int, error) {
+	var foundDocuments []Document
+	var tempDocument Document
+	//var foundULIDs []ulid.ULID
+	for _, ulidStr := range docULIDSt {
+		docULID, err := ulid.Parse(ulidStr)
+		if err != nil {
+			Logger.Error("Failed to parse UILD: ", ulidStr, err)
+			return foundDocuments, http.StatusNotFound, err
+		}
+		//foundULIDs = append(foundULIDs, newULID)
+		err = db.One("ULID", docULID, &tempDocument)
+		if err != nil {
+			Logger.Error("Unable to find the requested document: ", err)
+			return foundDocuments, http.StatusNotFound, err
+		}
+		foundDocuments = append(foundDocuments, tempDocument)
+	}
+	return foundDocuments, http.StatusOK, nil
+
+}
+
+//UpdateDocumentField updates a single field in a document
+func UpdateDocumentField(docULIDSt string, field string, newValue interface{}, db *storm.DB) (int, error) {
+	var newDocument Document
+	docULID, err := ulid.Parse(docULIDSt)
+	if err != nil {
+		Logger.Error("Unable to parse ULID String to convert to ID: ", err)
+		return http.StatusNotFound, err
+	}
+	err = db.One("ULID", docULID, &newDocument)
+	if err != nil {
+		Logger.Error("Unable to find document with ID: ", docULID, err)
+	}
+	stormIDDoc := newDocument.StormID
+	err = db.UpdateField(&Document{StormID: stormIDDoc}, field, newValue)
+	if err != nil {
+		Logger.Error("Unable to update document in db: ID: ", docULID, err)
+		return http.StatusNotFound, err
+	}
+	return http.StatusOK, nil
+
+}
+
+//FetchDocument fetches the requested document by ULID
+func FetchDocument(docULIDSt string, db *storm.DB) (Document, int, error) {
+	var foundDocument Document
+	fmt.Println("UUID STRING: ", docULIDSt)
+	docULID, err := ulid.Parse(docULIDSt) //convert string into ULID
+	if err != nil {
+		Logger.Error("Unable to parse ULID String to convert to ID: ", err)
+		return foundDocument, http.StatusNotFound, err
+	}
+	err = db.One("ULID", docULID, &foundDocument)
+	if err != nil {
+		Logger.Error("Unable to find the requested document: ", err)
+		return foundDocument, http.StatusNotFound, err
+	}
+	return foundDocument, http.StatusOK, nil
+}
+
+//FetchFolder grabs all of the documents contained in a folder
+func FetchFolder(folderName string, db *storm.DB) ([]Document, error) {
+	var folderContents []Document
+	err := db.Find("Folder", folderName, &folderContents) //TODO limit this?
+	if err != nil {
+		Logger.Error("Unable to find the requested folder: ", err)
+		return folderContents, err
+	}
+	return folderContents, nil
+}
+
+//DeleteDocument fetches the requested document by ULID
+func DeleteDocument(docULIDSt string, db *storm.DB) error {
+	deleteDocument, _, err := FetchDocument(docULIDSt, db)
+	if err != nil {
+		Logger.Error("Unable to fetch document for deletion: ", err)
+	}
+	err = db.DeleteStruct(&deleteDocument)
+	if err != nil {
+		Logger.Error("Unable to delete requested document: ", err)
+		return err
+	}
+	return nil
+}
+
+//DeleteDocumentFromSearch deletes everything in the search engine
+func DeleteDocumentFromSearch(deleteDocument Document, searchDB bleve.Index) error {
+	err := searchDB.Delete(deleteDocument.ULID.String()) //Delete everything tied to the ULID in bleve
+	if err != nil {
+		Logger.Error("Unable to delete document index in Bleve Search", deleteDocument.Name, err)
+		return err
+	}
+	return nil
 }
 
 func checkDuplicateDocument(fileHash string, fileName string, db *storm.DB) bool { //TODO: Check for duplicates before you do a shit ton of processing, why wasn't this obvious?

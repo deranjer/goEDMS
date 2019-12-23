@@ -30,6 +30,12 @@ type ServerConfig struct {
 	UseReverseProxy   bool
 	BaseURL           string
 	IngressInterval   int
+	FrontEndConfig
+}
+
+//FrontEndConfig stores all of the frontend settings
+type FrontEndConfig struct {
+	NewDocumentNumber int
 }
 
 func defaultConfig() ServerConfig { //TODO: Do I even bother, if config fails most likely not worth continuing
@@ -81,7 +87,15 @@ func SetupServer() (ServerConfig, *lecho.Logger) {
 	newDocumentPath := filepath.ToSlash(viper.GetString("documentLibrary.DefaultNewDocumentFolder"))
 	serverConfigLive.NewDocumentFolder = filepath.Join(serverConfigLive.DocumentPath, newDocumentPath)
 	os.MkdirAll(serverConfigLive.NewDocumentFolder, os.ModePerm)
+	frontEndConfigLive := setupFrontEnd()
+	serverConfigLive.FrontEndConfig = frontEndConfigLive
 	return serverConfigLive, logger
+}
+
+func setupFrontEnd() FrontEndConfig {
+	var frontEndConfigLive FrontEndConfig
+	frontEndConfigLive.NewDocumentNumber = viper.GetInt("frontend.NewDocumentNumber")
+	return frontEndConfigLive
 }
 
 func setupLogging() *lecho.Logger {

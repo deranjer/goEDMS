@@ -53,7 +53,7 @@ func ingressJobFunc(serverConfig config.ServerConfig, db *storm.DB, searchDB ble
 			if err != nil {
 				Logger.Error("Error moving ingress file to new location! ", file, err)
 			}
-			ingressCleanup(file, serverConfig)
+			ingressCleanup(file, document, serverConfig, db)
 
 		case ".txt", ".rtf":
 			textProcessing(file)
@@ -69,13 +69,33 @@ func ingressJobFunc(serverConfig config.ServerConfig, db *storm.DB, searchDB ble
 
 }
 
+//DeleteFolder deletes a folder and everything in that folder
+func DeleteFolder(folderName string) error {
+	err := os.RemoveAll(folderName)
+	if err != nil {
+		Logger.Error("Error deleting Folder: ", err)
+		return err
+	}
+	return nil
+}
+
+//DeleteDocumentFile deletes a file from the filesystem(database deletion handled in db)
+func DeleteDocumentFile(fileName string) error {
+	err := os.Remove(fileName)
+	if err != nil {
+		Logger.Error("Unable to delete file: ", err)
+		return err
+	}
+	return nil
+}
+
 //ingressCopyDocument copies the document to document storage location
 func ingressCopyDocument(fileName string, serverConfig config.ServerConfig) error {
 	srcFile, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		return err
 	}
-	newFileName := serverConfig.NewDocumentFolder + filepath.Base(fileName)
+	newFileName := serverConfig.NewDocumentFolder + "/" + filepath.Base(fileName)
 	err = ioutil.WriteFile(newFileName, srcFile, os.ModePerm)
 	if err != nil {
 		return err
@@ -84,7 +104,7 @@ func ingressCopyDocument(fileName string, serverConfig config.ServerConfig) erro
 }
 
 //ingressCleanup cleans up the ingress folder after we have handled the documents
-func ingressCleanup(fileName string, serverConfig config.ServerConfig) error {
+func ingressCleanup(fileName string, document database.Document, serverConfig config.ServerConfig, db *storm.DB) error {
 	if serverConfig.IngressDelete == true { //deleting the ingress files
 		err := os.Remove(fileName)
 		if err != nil {
@@ -92,10 +112,15 @@ func ingressCleanup(fileName string, serverConfig config.ServerConfig) error {
 		}
 		return nil
 	}
-	newFile := serverConfig.IngressMoveFolder + filepath.Base(fileName) //Moving ingress files to another location
+	newFile := serverConfig.IngressMoveFolder + "/" + filepath.Base(fileName) //Moving ingress files to another location
+	newFile = filepath.FromSlash(newFile)
 	err := os.Rename(fileName, newFile)
 	if err != nil {
 		return err
+	}
+	_, err = database.UpdateDocumentField(document.ULID.String(), "Path", newFile, db) //updating the database with the new file location
+	if err != nil {
+		Logger.Error("Unable to update document field: Path ", err)
 	}
 	return nil
 }

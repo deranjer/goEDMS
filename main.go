@@ -36,10 +36,20 @@ func main() {
 	database.WriteConfigToDB(serverConfig, db) //writing the config to the database
 	engine.InitializeSchedules(db, searchDB)   //initialize all the cron jobs
 	e := echo.New()
+	dbHandle := engine.DBHandler{DB: db, SearchDB: searchDB} //injecting the database into the handler for routes
 	e.Logger = Logger
 	e.Use(lecho.Middleware(lecho.Config{
 		Logger: logger}))
 	e.Static("/", "public/built") //serving up the React Frontend
 	log.Info("Logger enabled!!")
+	//injecting database into the context so we can access it
+
+	//Start the routes
+	e.GET("/home", dbHandle.GetLatestDocuments)
+	e.GET("/document/:id", dbHandle.GetDocument)
+	e.GET("/folder/:folder", dbHandle.GetFolder)
+	e.DELETE("/document/:id", dbHandle.DeleteDocument)
+	e.PATCH("document/move/*", dbHandle.MoveDocuments)
+
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%s", serverConfig.ListenAddrPort)))
 }

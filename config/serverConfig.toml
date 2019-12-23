@@ -4,12 +4,9 @@
     ServerAddr = "192.168.1.7" #Put in the IP address you want to bind to as string
     #Relative or absolute path accepted, the server will convert any relative path to an absolute path.
 
-    
-
 [documentLibrary]
     DocumentFileSystemLocation = 'documents' #Location to store documents
     DefaultNewDocumentFolder = 'New' #default folder that ingressed documents will be placed in
-
 
 [ingress]
     IngressPath = 'ingress' #default path that the server will scan for new documents
@@ -20,7 +17,6 @@
         #If True will delete files from ingress folder after processed (will leave ones if they produce error), if false will move to another folder
         IngressDeleteOnProcess = false 
         IngressMoveFolder = 'done' #default path that the server will move processed ingress documents to
-
 
 [ocr]
     #Path to Tesseract binary (required for OCR)
@@ -38,6 +34,9 @@
     ProxyEnabled = false #bool, either false or true
     #URL is CASE SENSITIVE
     BaseURL = "domain.com/subroute/"  # MUST be in the format (if you have a subdomain, and must have trailing slash) "yoursubdomain.domain.org/subroute/"
+
+[frontend]
+    NewDocumentNumber = 5 # number of new documents to fetch to view
 
 [logging]
 
