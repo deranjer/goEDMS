@@ -27,7 +27,6 @@ func main() {
 	serverConfig, logger := config.SetupServer()
 	injectGlobals(logger) //inject the logger into all of the packages
 	db := database.SetupDatabase()
-	database.WriteConfigToDB(serverConfig, db) //Write the config back to the database
 	searchDB, err := database.SetupSearchDB()
 	if err != nil {
 		Logger.Fatal("Unable to setup index database", err)

@@ -37,6 +37,7 @@ require (
 	github.com/ziflex/lecho/v2 v2.0.0
 	golang.org/x/net v0.0.0-20190628185345-da137c7871d7 // indirect
 	golang.org/x/sys v0.0.0-20191002091554-b397fe3ad8ed // indirect
+	gopkg.in/fsnotify.v1 v1.4.7
 )
 
 replace github.com/deranjer/goEDMS => ../goEDMS
