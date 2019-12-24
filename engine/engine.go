@@ -22,7 +22,7 @@ func ingressJobFunc(serverConfig config.ServerConfig, db *storm.DB, searchDB ble
 	//serverConfig := database.FetchConfigFromDB(db)
 	serverConfig, err := database.FetchConfigFromDB(db)
 	if err != nil {
-		fmt.Println("FUCKING ERROR READING", err)
+		Logger.Error("Error reading config from database: ", err)
 	}
 	var fullText string //The text extraction result whether it is OCR or other method
 	Logger.Info("Starting Ingress Job on folder:", serverConfig.IngressPath)
@@ -95,7 +95,7 @@ func ingressCopyDocument(fileName string, serverConfig config.ServerConfig) erro
 	if err != nil {
 		return err
 	}
-	newFileName := serverConfig.NewDocumentFolder + "/" + filepath.Base(fileName)
+	newFileName := filepath.ToSlash(serverConfig.NewDocumentFolder + "/" + filepath.Base(fileName))
 	err = ioutil.WriteFile(newFileName, srcFile, os.ModePerm)
 	if err != nil {
 		return err
@@ -118,10 +118,10 @@ func ingressCleanup(fileName string, document database.Document, serverConfig co
 	if err != nil {
 		return err
 	}
-	_, err = database.UpdateDocumentField(document.ULID.String(), "Path", newFile, db) //updating the database with the new file location
-	if err != nil {
-		Logger.Error("Unable to update document field: Path ", err)
-	}
+	//_, err = database.UpdateDocumentField(document.ULID.String(), "Path", newFile, db) //updating the database with the new file location
+	//if err != nil {
+	//		Logger.Error("Unable to update document field: Path ", err)
+	//	}
 	return nil
 }
 

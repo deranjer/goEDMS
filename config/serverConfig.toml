@@ -6,7 +6,7 @@
 
 [documentLibrary]
     DocumentFileSystemLocation = 'documents' #Location to store documents
-    DefaultNewDocumentFolder = 'New' #default folder that ingressed documents will be placed in
+    DefaultNewDocumentFolder = 'New' #default folder that ingressed documents will be placed in (inside the Document library), for multiple folders deep can do '2020/New'
 
 [ingress]
     IngressPath = 'ingress' #default path that the server will scan for new documents

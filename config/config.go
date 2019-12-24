@@ -15,21 +15,22 @@ var Logger *lecho.Logger
 
 //ServerConfig contains all of the server settings defined in the TOML file
 type ServerConfig struct {
-	StormID           int `storm:"id"`
-	ListenAddrIP      string
-	ListenAddrPort    string
-	IngressPath       string
-	IngressDelete     bool
-	IngressMoveFolder string
-	DocumentPath      string
-	NewDocumentFolder string
-	WebUIPass         bool
-	ClientUsername    string
-	ClientPassword    string
-	PushBulletToken   string `json:"-"`
-	UseReverseProxy   bool
-	BaseURL           string
-	IngressInterval   int
+	StormID              int `storm:"id"`
+	ListenAddrIP         string
+	ListenAddrPort       string
+	IngressPath          string
+	IngressDelete        bool
+	IngressMoveFolder    string
+	DocumentPath         string
+	NewDocumentFolder    string //absolute path to new document folder
+	NewDocumentFolderRel string //relative path to new document folder Needed for multiple levels deep.
+	WebUIPass            bool
+	ClientUsername       string
+	ClientPassword       string
+	PushBulletToken      string `json:"-"`
+	UseReverseProxy      bool
+	BaseURL              string
+	IngressInterval      int
 	FrontEndConfig
 }
 
@@ -85,6 +86,7 @@ func SetupServer() (ServerConfig, *lecho.Logger) {
 		logger.Error("Failed creating absolute path for document library", err)
 	}
 	newDocumentPath := filepath.ToSlash(viper.GetString("documentLibrary.DefaultNewDocumentFolder"))
+	serverConfigLive.NewDocumentFolderRel = newDocumentPath
 	serverConfigLive.NewDocumentFolder = filepath.Join(serverConfigLive.DocumentPath, newDocumentPath)
 	os.MkdirAll(serverConfigLive.NewDocumentFolder, os.ModePerm)
 	frontEndConfigLive := setupFrontEnd()

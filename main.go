@@ -33,6 +33,7 @@ func main() {
 		Logger.Fatal("Unable to setup index database", err)
 	}
 	defer db.Close()
+	defer searchDB.Close()
 	database.WriteConfigToDB(serverConfig, db) //writing the config to the database
 	engine.InitializeSchedules(db, searchDB)   //initialize all the cron jobs
 	e := echo.New()
@@ -48,6 +49,7 @@ func main() {
 	e.GET("/home", dbHandle.GetLatestDocuments)
 	e.GET("/document/:id", dbHandle.GetDocument)
 	e.GET("/folder/:folder", dbHandle.GetFolder)
+	e.GET("/search/*", dbHandle.SearchDocuments)
 	e.DELETE("/document/:id", dbHandle.DeleteDocument)
 	e.PATCH("document/move/*", dbHandle.MoveDocuments)
 

@@ -87,11 +87,12 @@ func AddNewDocument(fileName string, fullText string, db *storm.DB, searchDB ble
 		return newDocument, err
 	}
 	newDocument.Name = filepath.Base(fileName)
-	newDocument.Path = fileName
+	documentPath := filepath.ToSlash(serverConfig.DocumentPath + "/" + serverConfig.NewDocumentFolderRel + "/" + filepath.Base(fileName))
+	newDocument.Path = documentPath
 	newDocument.Hash = fileHash
 	newDocument.IngressTime = newTime
 	newDocument.ULID = newULID
-	documentFolder := serverConfig.DocumentPath + "/" + serverConfig.IngressMoveFolder
+	documentFolder := filepath.ToSlash(serverConfig.DocumentPath + "/" + serverConfig.NewDocumentFolderRel)
 	newDocument.Folder = documentFolder
 	newDocument.DocumentType = filepath.Ext(fileName)
 	newDocument.FullText = fullText
@@ -220,7 +221,7 @@ func checkDuplicateDocument(fileHash string, fileName string, db *storm.DB) bool
 	var document Document
 	err := db.One("Hash", fileHash, &document)
 	if err != nil {
-		Logger.Info("No record found, assume no duplicate hash", err)
+		Logger.Info("No record found, assume no duplicate hash: ", err)
 		return false
 	}
 	Logger.Info("Duplicate document found on import (Hash collision) !" + fileName + " With documentTHISDOCUMENT!!!!: " + document.Name)

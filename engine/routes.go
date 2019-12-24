@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"unicode"
 
 	"github.com/asdine/storm"
 	"github.com/blevesearch/bleve"
@@ -66,11 +67,42 @@ func (dbHandle *DBHandler) MoveDocuments(context echo.Context) error {
 	return context.JSON(http.StatusOK, "Ok")
 }
 
+//SearchDocuments will take the search terms and search all documents
+func (dbHandle *DBHandler) SearchDocuments(context echo.Context) error {
+	searchParams := context.QueryParams()
+	searchTerm := searchParams.Get("term")
+	if searchTerm == "" {
+		return context.JSON(http.StatusNotFound, "Empty search term")
+	}
+	var phraseSearch bool
+	var searchResults *bleve.SearchResult
+	var err error
+	for _, char := range searchTerm {
+		if unicode.IsSpace(char) { //if there is a space in the result, do a phrase search
+			Logger.Debug("Found space in search term, converting to phrase: ", searchTerm)
+			phraseSearch = true
+			searchResults, err = SearchPhrase(searchTerm, dbHandle.SearchDB)
+			if err != nil {
+				Logger.Error("Search failed: ", err)
+				return context.JSON(http.StatusNotFound, err)
+			}
+		}
+	}
+	if !phraseSearch { //if no space found in search term
+		Logger.Debug("Performing Single Term Search: ", searchTerm)
+		searchResults, err = SearchSingleTerm(searchTerm, dbHandle.SearchDB)
+	}
+	documents, err := ParseSearchResults(searchResults, dbHandle.DB)
+	if err != nil {
+		Logger.Error("Unable to get documents from search: ", err)
+		return context.JSON(http.StatusNotFound, err)
+	}
+	return context.JSON(http.StatusOK, documents)
+}
+
 //GetDocument will return a document by ULID
 func (dbHandle *DBHandler) GetDocument(context echo.Context) error {
-	//ulid, err := strconv.Atoi(context.Param("id"))
 	ulidStr := context.Param("id")
-
 	document, httpStatus, err := database.FetchDocument(ulidStr, dbHandle.DB)
 	if err != nil {
 		Logger.Error("GetDocument API call failed: ", err)

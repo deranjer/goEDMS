@@ -24,7 +24,7 @@ func InitializeSchedules(db *storm.DB, searchDB bleve.Index) {
 	ingressJob = cron.NewChain(cron.SkipIfStillRunning(cron.DefaultLogger)).Then(ingressJob)
 	serverConfig.IngressInterval = 25
 	//c.AddJob(fmt.Sprintf("@every %dm", serverConfig.IngressInterval), ingressJob)
-	c.AddJob("@every 25m", ingressJob)
+	c.AddJob("@every 1m", ingressJob)
 	Logger.Infof("Adding Ingress Job that runs every %dm", serverConfig.IngressInterval)
 	c.Start()
 
