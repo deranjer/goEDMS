@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
 	"github.com/ziflex/lecho/v2"
 
@@ -34,23 +35,25 @@ func main() {
 	defer db.Close()
 	defer searchDB.Close()
 	database.WriteConfigToDB(serverConfig, db) //writing the config to the database
-	engine.InitializeSchedules(db, searchDB)   //initialize all the cron jobs
 	e := echo.New()
-	dbHandle := engine.DBHandler{DB: db, SearchDB: searchDB} //injecting the database into the handler for routes
+	serverHandler := engine.ServerHandler{DB: db, SearchDB: searchDB, Echo: e, ServerConfig: serverConfig} //injecting the database into the handler for routes
+	serverHandler.InitializeSchedules(db, searchDB)                                                        //initialize all the cron jobs
 	e.Logger = Logger
 	e.Use(lecho.Middleware(lecho.Config{
 		Logger: logger}))
+	e.Use(middleware.CORSWithConfig(middleware.DefaultCORSConfig))
 	e.Static("/", "public/built") //serving up the React Frontend
 	log.Info("Logger enabled!!")
 	//injecting database into the context so we can access it
 
 	//Start the routes
-	e.GET("/home", dbHandle.GetLatestDocuments)
-	e.GET("/document/:id", dbHandle.GetDocument)
-	e.GET("/folder/:folder", dbHandle.GetFolder)
-	e.GET("/search/*", dbHandle.SearchDocuments)
-	e.DELETE("/document/:id", dbHandle.DeleteDocument)
-	e.PATCH("document/move/*", dbHandle.MoveDocuments)
+	e.GET("/home", serverHandler.GetLatestDocuments)
+	e.GET("/documents/filesystem", serverHandler.GetDocumentFileSystem)
+	e.GET("/document/:id", serverHandler.GetDocument)
+	e.GET("/folder/:folder", serverHandler.GetFolder)
+	e.GET("/search/*", serverHandler.SearchDocuments)
+	e.DELETE("/document/:id", serverHandler.DeleteDocument)
+	e.PATCH("document/move/*", serverHandler.MoveDocuments)
 
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%s", serverConfig.ListenAddrPort)))
 }

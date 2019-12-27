@@ -17,7 +17,7 @@ import (
 	"github.com/ledongthuc/pdf"
 )
 
-func ingressJobFunc(serverConfig config.ServerConfig, db *storm.DB, searchDB bleve.Index) {
+func (serverHandler *ServerHandler) ingressJobFunc(serverConfig config.ServerConfig, db *storm.DB, searchDB bleve.Index) {
 	//fmt.Println("Testing job func")
 	//serverConfig := database.FetchConfigFromDB(db)
 	serverConfig, err := database.FetchConfigFromDB(db)
@@ -45,15 +45,22 @@ func ingressJobFunc(serverConfig config.ServerConfig, db *storm.DB, searchDB ble
 					continue
 				}
 			}
-			document, err := database.AddNewDocument(file, fullText, db, searchDB)
+			document, err := database.AddNewDocument(file, fullText, db, searchDB) //Adds everything but the URL, that is added afterwards
 			if err != nil {
-				fmt.Println("UNABLE TO ADD NEW DOCUMENT", document, err)
+				fmt.Println("UNABLE TO ADD NEW DOCUMENT", document, err) //TODO: Handle document that we were unable to add
+				continue
+			}
+			documentURL := "/document/view/" + document.ULID.String()
+			serverHandler.Echo.File(documentURL, document.Path)                                   //Generating a direct URL to document
+			_, err = database.UpdateDocumentField(document.ULID.String(), "URL", documentURL, db) //updating the database with the new file location
+			if err != nil {
+				Logger.Error("Unable to update document field: Path ", err)
 			}
 			err = ingressCopyDocument(file, serverConfig)
 			if err != nil {
 				Logger.Error("Error moving ingress file to new location! ", file, err)
 			}
-			ingressCleanup(file, document, serverConfig, db)
+			ingressCleanup(file, *document, serverConfig, db)
 
 		case ".txt", ".rtf":
 			textProcessing(file)
@@ -118,10 +125,6 @@ func ingressCleanup(fileName string, document database.Document, serverConfig co
 	if err != nil {
 		return err
 	}
-	//_, err = database.UpdateDocumentField(document.ULID.String(), "Path", newFile, db) //updating the database with the new file location
-	//if err != nil {
-	//		Logger.Error("Unable to update document field: Path ", err)
-	//	}
 	return nil
 }
 

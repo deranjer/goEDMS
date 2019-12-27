@@ -24,6 +24,7 @@ require (
 	github.com/labstack/echo/v4 v4.1.10
 	github.com/labstack/gommon v0.3.0
 	github.com/ledongthuc/pdf v0.0.0-20190830105003-8ac343ec9fdd
+	github.com/oklog/ulid v1.3.1
 	github.com/oklog/ulid/v2 v2.0.2
 	github.com/remyoudompheng/bigfft v0.0.0-20190728182440-6a916e37a237 // indirect
 	github.com/robfig/cron/v3 v3.0.0

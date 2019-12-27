@@ -29,6 +29,7 @@ type Document struct {
 	ULID         ulid.ULID `storm:"index"` //Have a smaller (than hash) id that can be used in URL's, hopefully speed things up
 	DocumentType string    //type of document (pdf, txt, etc)
 	FullText     string
+	URL          string
 }
 
 //Logger is global since we will need it everywhere
@@ -65,27 +66,28 @@ func WriteConfigToDB(serverConfig config.ServerConfig, db *storm.DB) {
 }
 
 //AddNewDocument adds a new document to the database
-func AddNewDocument(fileName string, fullText string, db *storm.DB, searchDB bleve.Index) (Document, error) {
+func AddNewDocument(fileName string, fullText string, db *storm.DB, searchDB bleve.Index) (*Document, error) {
 	serverConfig, err := FetchConfigFromDB(db)
 	if err != nil {
-		fmt.Println("Can't get the goddamn config")
+		Logger.Error("Unable to fetch config to add new document: ", fileName, err)
 	}
 	var newDocument Document
 	fileHash, err := calculateHash(fileName)
 	if err != nil {
-		return newDocument, err
+		return nil, err
 	}
 	duplicate := checkDuplicateDocument(fileHash, fileName, db)
 	if duplicate {
 		err = errors.New("Duplicate document found on import (Hash collision) ! " + fileName)
 		Logger.Error(err)
-		return newDocument, err //TODO return actual error
+		return nil, err //TODO return actual error
 	}
 	newTime := time.Now()
 	newULID, err := calculateUUID(newTime)
 	if err != nil {
-		return newDocument, err
+		Logger.Error("Cannot generate ULID: ", fileName, err)
 	}
+
 	newDocument.Name = filepath.Base(fileName)
 	documentPath := filepath.ToSlash(serverConfig.DocumentPath + "/" + serverConfig.NewDocumentFolderRel + "/" + filepath.Base(fileName))
 	newDocument.Path = documentPath
@@ -100,12 +102,14 @@ func AddNewDocument(fileName string, fullText string, db *storm.DB, searchDB ble
 	searchDB.Index(newDocument.ULID.String(), newDocument.FullText) //adding to bleve using the ULID as the ID and the fulltext TODO: Perhaps add entire struct this will give more search options
 	if err != nil {
 		Logger.Error("Unable to index Document in Bleve Search", newDocument.Name, err)
+		return nil, err
 	}
 	err = db.Save(&newDocument) //Writing it in document bucket
 	if err != nil {
 		Logger.Fatal("Unable to write document to bucket!", err)
+		return nil, err
 	}
-	return newDocument, err
+	return &newDocument, nil
 }
 
 //FetchNewestDocuments fetches the documents that were added last
@@ -182,6 +186,17 @@ func FetchDocument(docULIDSt string, db *storm.DB) (Document, int, error) {
 	return foundDocument, http.StatusOK, nil
 }
 
+//FetchDocumentFromPath fetches the document by document path
+func FetchDocumentFromPath(path string, db *storm.DB) (Document, error) {
+	var foundDocument Document
+	err := db.One("Path", path, &foundDocument)
+	if err != nil {
+		Logger.Error("Unable to find the requested document from path: ", err, path)
+		return foundDocument, err
+	}
+	return foundDocument, nil
+}
+
 //FetchFolder grabs all of the documents contained in a folder
 func FetchFolder(folderName string, db *storm.DB) ([]Document, error) {
 	var folderContents []Document
@@ -228,13 +243,6 @@ func checkDuplicateDocument(fileHash string, fileName string, db *storm.DB) bool
 	return true
 }
 
-//calculate a UUID for the incoming file
-func calculateUUID(time time.Time) (ulid.ULID, error) {
-	entropy := ulid.Monotonic(rand.New(rand.NewSource(time.UnixNano())), 0)
-	newULID, err := ulid.New(ulid.Timestamp(time), entropy)
-	return newULID, err
-}
-
 //calculate the hash of the incoming file
 func calculateHash(fileName string) (string, error) {
 	var fileHash string
@@ -250,4 +258,11 @@ func calculateHash(fileName string) (string, error) {
 	}
 	fileHash = fmt.Sprintf("%x", hash.Sum(nil))
 	return fileHash, nil
+}
+
+//calculate a UUID for the incoming file
+func calculateUUID(time time.Time) (ulid.ULID, error) {
+	entropy := ulid.Monotonic(rand.New(rand.NewSource(time.UnixNano())), 0)
+	newULID, err := ulid.New(ulid.Timestamp(time), entropy)
+	return newULID, err
 }
