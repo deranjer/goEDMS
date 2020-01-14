@@ -5,10 +5,13 @@
   "dependencies": {
     "@material-ui/core": "^4.0.0",
     "@material-ui/icons": "^4.5.1",
+    "chonky": "^0.2.5",
     "devextreme": "19.2",
     "global": "^4.4.0",
-    "react": "^16.8.0",
-    "react-dom": "^16.8.0",
+    "prop-types": ">=15.5.10",
+    "react": ">=16.2.0",
+    "react-dom": ">=16.2.0",
+    "react-dropzone-uploader": "^2.11.0",
     "react-file-viewer": "^1.2.1",
     "react-router-dom": "^5.1.2",
     "react-toastify": "^5.4.1"

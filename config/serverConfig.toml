@@ -17,7 +17,9 @@
         #If True will delete files from ingress folder after processed (will leave ones if they produce error), if false will move to another folder
         IngressDeleteOnProcess = false 
         IngressMoveFolder = 'done' #default path that the server will move processed ingress documents to
-
+    [ingress.handling]
+        PreserveDirStructure = true #if nested folders are in the ingress path will copy that existing structure to document storage
+        
 [ocr]
     #Path to Tesseract binary (required for OCR)
     TesseractBin = "/usr/local/bin/tesseract"

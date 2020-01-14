@@ -6,3 +6,5 @@ temp
 documents
 done
 goEDMS.db
+public/node_modules
+public/dist

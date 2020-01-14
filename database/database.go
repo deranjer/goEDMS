@@ -66,37 +66,51 @@ func WriteConfigToDB(serverConfig config.ServerConfig, db *storm.DB) {
 }
 
 //AddNewDocument adds a new document to the database
-func AddNewDocument(fileName string, fullText string, db *storm.DB, searchDB bleve.Index) (*Document, error) {
+func AddNewDocument(filePath string, fullText string, db *storm.DB, searchDB bleve.Index) (*Document, error) {
 	serverConfig, err := FetchConfigFromDB(db)
 	if err != nil {
-		Logger.Error("Unable to fetch config to add new document: ", fileName, err)
+		Logger.Error("Unable to fetch config to add new document: ", filePath, err)
 	}
 	var newDocument Document
-	fileHash, err := calculateHash(fileName)
+	fileHash, err := calculateHash(filePath)
 	if err != nil {
 		return nil, err
 	}
-	duplicate := checkDuplicateDocument(fileHash, fileName, db)
+	duplicate := checkDuplicateDocument(fileHash, filePath, db)
 	if duplicate {
-		err = errors.New("Duplicate document found on import (Hash collision) ! " + fileName)
+		err = errors.New("Duplicate document found on import (Hash collision) ! " + filePath)
 		Logger.Error(err)
 		return nil, err //TODO return actual error
 	}
 	newTime := time.Now()
-	newULID, err := calculateUUID(newTime)
+	newULID, err := CalculateUUID(newTime)
 	if err != nil {
-		Logger.Error("Cannot generate ULID: ", fileName, err)
+		Logger.Error("Cannot generate ULID: ", filePath, err)
 	}
 
-	newDocument.Name = filepath.Base(fileName)
-	documentPath := filepath.ToSlash(serverConfig.DocumentPath + "/" + serverConfig.NewDocumentFolderRel + "/" + filepath.Base(fileName))
-	newDocument.Path = documentPath
+	newDocument.Name = filepath.Base(filePath)
+	if serverConfig.IngressPreserve { //if we are preserving the entire path of the document generate the full path
+		basePath := serverConfig.IngressPath
+		newFileNameRoot := serverConfig.DocumentPath
+		relativePath, err := filepath.Rel(basePath, filePath)
+		if err != nil {
+			return nil, err
+		}
+		newFilePath := filepath.Join(newFileNameRoot, relativePath)
+		fmt.Println("NEW PATH: ", newFilePath)
+		fmt.Println("New FOLDER", filepath.Dir(newFilePath))
+		newDocument.Path = filepath.ToSlash(newFilePath)
+		newDocument.Folder = filepath.Dir(newFilePath)
+	} else {
+		documentPath := filepath.ToSlash(serverConfig.DocumentPath + "/" + serverConfig.NewDocumentFolderRel + "/" + filepath.Base(filePath))
+		newDocument.Path = documentPath
+		documentFolder := filepath.ToSlash(serverConfig.DocumentPath + "/" + serverConfig.NewDocumentFolderRel)
+		newDocument.Folder = documentFolder
+	}
 	newDocument.Hash = fileHash
 	newDocument.IngressTime = newTime
 	newDocument.ULID = newULID
-	documentFolder := filepath.ToSlash(serverConfig.DocumentPath + "/" + serverConfig.NewDocumentFolderRel)
-	newDocument.Folder = documentFolder
-	newDocument.DocumentType = filepath.Ext(fileName)
+	newDocument.DocumentType = filepath.Ext(filePath)
 	newDocument.FullText = fullText
 
 	searchDB.Index(newDocument.ULID.String(), newDocument.FullText) //adding to bleve using the ULID as the ID and the fulltext TODO: Perhaps add entire struct this will give more search options
@@ -122,6 +136,17 @@ func FetchNewestDocuments(numberOf int, db *storm.DB) ([]Document, error) {
 		return newestDocuments, err
 	}
 	return newestDocuments, nil
+}
+
+//FetchAllDocuments fetches all the documents in the database
+func FetchAllDocuments(db *storm.DB) (*[]Document, error) {
+	var allDocuments []Document
+	err := db.AllByIndex("StormID", &allDocuments)
+	if err != nil {
+		Logger.Error("Unable to find the latest documents: ", err)
+		return nil, err
+	}
+	return &allDocuments, nil
 }
 
 //FetchDocuments fetches an array of documents //TODO: Not fucking needed?
@@ -189,6 +214,7 @@ func FetchDocument(docULIDSt string, db *storm.DB) (Document, int, error) {
 //FetchDocumentFromPath fetches the document by document path
 func FetchDocumentFromPath(path string, db *storm.DB) (Document, error) {
 	var foundDocument Document
+	path = filepath.ToSlash(path) //converting to slash before search
 	err := db.One("Path", path, &foundDocument)
 	if err != nil {
 		Logger.Error("Unable to find the requested document from path: ", err, path)
@@ -260,9 +286,12 @@ func calculateHash(fileName string) (string, error) {
 	return fileHash, nil
 }
 
-//calculate a UUID for the incoming file
-func calculateUUID(time time.Time) (ulid.ULID, error) {
+//Calculate UUID for the incoming file
+func CalculateUUID(time time.Time) (ulid.ULID, error) {
 	entropy := ulid.Monotonic(rand.New(rand.NewSource(time.UnixNano())), 0)
 	newULID, err := ulid.New(ulid.Timestamp(time), entropy)
-	return newULID, err
+	if err != nil {
+		return newULID, err
+	}
+	return newULID, nil
 }

@@ -21,6 +21,7 @@ type ServerConfig struct {
 	IngressPath          string
 	IngressDelete        bool
 	IngressMoveFolder    string
+	IngressPreserve      bool
 	DocumentPath         string
 	NewDocumentFolder    string //absolute path to new document folder
 	NewDocumentFolderRel string //relative path to new document folder Needed for multiple levels deep.
@@ -71,6 +72,7 @@ func SetupServer() (ServerConfig, *lecho.Logger) {
 	serverConfigLive.ListenAddrPort = viper.GetString("serverConfig.ServerPort")
 	serverConfigLive.ListenAddrIP = viper.GetString("serverConfig.ServerAddr")
 	serverConfigLive.IngressInterval = viper.GetInt("ingress.scheduling.IngressInterval")
+	serverConfigLive.IngressPreserve = viper.GetBool("ingress.handling.PreserveDirStructure")
 	serverConfigLive.IngressDelete = viper.GetBool("ingress.completed.IngressDeleteOnProcess")
 	ingressMoveFolder := filepath.ToSlash(viper.GetString("ingress.completed.IngressMoveFolder"))
 	ingressMoveFolderABS, err := filepath.Abs(ingressMoveFolder)

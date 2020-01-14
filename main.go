@@ -50,10 +50,13 @@ func main() {
 	e.GET("/home", serverHandler.GetLatestDocuments)
 	e.GET("/documents/filesystem", serverHandler.GetDocumentFileSystem)
 	e.GET("/document/:id", serverHandler.GetDocument)
-	e.GET("/folder/:folder", serverHandler.GetFolder)
-	e.GET("/search/*", serverHandler.SearchDocuments)
-	e.DELETE("/document/:id", serverHandler.DeleteDocument)
+	e.DELETE("/document/*", serverHandler.DeleteFile)
 	e.PATCH("document/move/*", serverHandler.MoveDocuments)
+	e.POST("/document/upload", serverHandler.UploadDocuments)
+	serverHandler.AddDocumentViewRoutes() //Add all existing documents to direct view links
+	e.GET("/folder/:folder", serverHandler.GetFolder)
+	e.POST("/folder/*", serverHandler.CreateFolder)
+	e.GET("/search/*", serverHandler.SearchDocuments)
 
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%s", serverConfig.ListenAddrPort)))
 }
