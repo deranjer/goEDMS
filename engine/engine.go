@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -18,8 +19,6 @@ import (
 )
 
 func (serverHandler *ServerHandler) ingressJobFunc(serverConfig config.ServerConfig, db *storm.DB, searchDB bleve.Index) {
-	//fmt.Println("Testing job func")
-	//serverConfig := database.FetchConfigFromDB(db)
 	serverConfig, err := database.FetchConfigFromDB(db)
 	if err != nil {
 		Logger.Error("Error reading config from database: ", err)
@@ -36,6 +35,7 @@ func (serverHandler *ServerHandler) ingressJobFunc(serverConfig config.ServerCon
 	for _, filePath := range documentPath {
 		serverHandler.ingressDocument(filePath, "ingress")
 	}
+	deleteEmptyIngressFolders(serverHandler.ServerConfig.IngressPath) //after ingress clean empty folders
 }
 
 func (serverHandler *ServerHandler) ingressDocument(filePath string, source string) {
@@ -92,6 +92,22 @@ func (serverHandler *ServerHandler) addDocumentToDatabase(filePath string, fullT
 		}
 	}
 	return nil
+}
+
+func deleteEmptyIngressFolders(path string) {
+	filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
+		f, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+		_, err = f.Readdirnames(1)
+		if err == io.EOF {
+			os.Remove(path)
+			return nil
+		}
+		return err
+	})
 }
 
 //DeleteFile deletes a folder (or file) and everything in that folder
@@ -210,8 +226,8 @@ func convertToImage(fileName string) (*string, error) {
 	}
 	fileName = filepath.Clean(fileName)
 	imageName = filepath.Clean(imageName)
-	fmt.Println("Creating temp image for OCR AT: ", imageName)
-	_, err = os.OpenFile(fileName, os.O_RDWR, 0755)
+	Logger.Info("Creating temp image for OCR at: ", imageName)
+	_, err = os.OpenFile(fileName, os.O_RDWR, 0755) //TODO: Perhaps OS.stat would be enough of a test
 	if err != nil {
 		fmt.Println("ERROR FILE ISSUE", err)
 		return nil, err

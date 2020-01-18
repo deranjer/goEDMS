@@ -90,6 +90,8 @@ func SetupServer() (ServerConfig, *lecho.Logger) {
 	newDocumentPath := filepath.ToSlash(viper.GetString("documentLibrary.DefaultNewDocumentFolder"))
 	serverConfigLive.NewDocumentFolderRel = newDocumentPath
 	serverConfigLive.NewDocumentFolder = filepath.Join(serverConfigLive.DocumentPath, newDocumentPath)
+	serverConfigLive.UseReverseProxy = viper.GetBool("reverseProxy.ProxyEnabled")
+	serverConfigLive.BaseURL = viper.GetString("reverseProxy.BaseURL")
 	os.MkdirAll(serverConfigLive.NewDocumentFolder, os.ModePerm)
 	frontEndConfigLive := setupFrontEnd()
 	serverConfigLive.FrontEndConfig = frontEndConfigLive

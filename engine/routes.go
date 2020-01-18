@@ -69,19 +69,19 @@ func (serverHandler *ServerHandler) AddDocumentViewRoutes() error {
 //DeleteFile deletes a folder or file from the database (and all children if folder) (and on disc and from bleve search if document)
 func (serverHandler *ServerHandler) DeleteFile(context echo.Context) error {
 	var err error
-	ulidStr := context.Param("id")
-	path := context.Param("path")
+	params := context.QueryParams()
+	ulidStr := params.Get("id")
+	path := params.Get("path")
 	path = filepath.Join(serverHandler.ServerConfig.DocumentPath, path)
 	path, err = filepath.Abs(path)
 	if err != nil {
-		return err
+		return context.JSON(http.StatusInternalServerError, err)
 	}
 	fmt.Println("PATH", path)
 	if path == serverHandler.ServerConfig.DocumentPath { //TODO: IMPORTANT: Make this MUCH safer so we don't literally purge everything in root lol (side note, yes I did discover that the hard way)
-		return err
+		return context.JSON(http.StatusInternalServerError, err)
 	}
 
-	return context.JSON(http.StatusOK, path)
 	fileInfo, err := os.Stat(path)
 	if err != nil {
 		Logger.Error("Unable to get information for file: ", path, err)
@@ -182,20 +182,33 @@ func (serverHandler *ServerHandler) SearchDocuments(context echo.Context) error 
 			searchResults, err = SearchPhrase(searchTerm, serverHandler.SearchDB)
 			if err != nil {
 				Logger.Error("Search failed: ", err)
-				return context.JSON(http.StatusNotFound, err)
+				return context.JSON(http.StatusInternalServerError, err)
 			}
 		}
 	}
 	if !phraseSearch { //if no space found in search term
 		Logger.Debug("Performing Single Term Search: ", searchTerm)
 		searchResults, err = SearchSingleTerm(searchTerm, serverHandler.SearchDB)
+		if err != nil {
+			Logger.Error("Search returned an error! ", err, searchTerm)
+			return context.JSON(http.StatusInternalServerError, err)
+		}
+	}
+	if searchResults.Total == 0 {
+		Logger.Info("Search returned no results! ", searchTerm)
+		return context.JSON(http.StatusNoContent, nil)
 	}
 	documents, err := ParseSearchResults(searchResults, serverHandler.DB)
+	if err != nil {
+		Logger.Error("Unable to convert results to documents! ", err)
+		return context.JSON(http.StatusInternalServerError, err)
+	}
+	fullResults, err := convertDocumentsToFileTree(documents)
 	if err != nil {
 		Logger.Error("Unable to get documents from search: ", err)
 		return context.JSON(http.StatusNotFound, err)
 	}
-	return context.JSON(http.StatusOK, documents)
+	return context.JSON(http.StatusOK, fullResults)
 }
 
 //GetDocument will return a document by ULID
@@ -219,6 +232,47 @@ func (serverHandler *ServerHandler) GetDocumentFileSystem(context echo.Context) 
 	//fileSystem := fileSystem{FolderTree: *folderTree, FileTree: *documents}
 	return context.JSON(http.StatusOK, fileSystem)
 
+}
+
+func convertDocumentsToFileTree(documents []database.Document) (fullFileTree *[]fileTreeStruct, err error) {
+	var fileTree []fileTreeStruct
+	var currentFile fileTreeStruct
+	for _, document := range documents {
+		documentInfo, err := os.Stat(document.Path)
+		if err != nil {
+			return nil, err
+		}
+		currentFile.ID = document.ULID.String()
+		currentFile.ULIDStr = currentFile.ID
+		currentFile.Size = documentInfo.Size()
+		currentFile.Name = document.Name
+		currentFile.Openable = true
+		currentFile.ModDate = documentInfo.ModTime().String()
+		currentFile.IsDir = false
+		currentFile.FullPath = document.Path
+		currentFile.FileURL = document.URL
+		currentFile.ParentID = "SearchResults"
+		fileTree = append(fileTree, currentFile)
+	}
+	childrenIDs := func() []string {
+		var ids []string
+		for _, file := range fileTree {
+			ids = append(ids, file.Name)
+		}
+		return ids
+	}
+	rootDir := fileTreeStruct{ //creating a fake root directory to display results in
+		ID:          "SearchResults",
+		Size:        0,
+		Name:        "Search Results",
+		Openable:    true,
+		ModDate:     time.Now().String(),
+		IsDir:       true,
+		FullPath:    "null",
+		ChildrenIDs: childrenIDs(),
+	}
+	fileTree = append([]fileTreeStruct{rootDir}, fileTree...)
+	return &fileTree, nil
 }
 
 func fileTree(rootPath string, db *storm.DB) (fileTree *[]fileTreeStruct, err error) {

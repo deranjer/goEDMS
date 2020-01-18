@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
@@ -42,6 +41,7 @@ func main() {
 	e.Use(lecho.Middleware(lecho.Config{
 		Logger: logger}))
 	e.Use(middleware.CORSWithConfig(middleware.DefaultCORSConfig))
+
 	e.Static("/", "public/built") //serving up the React Frontend
 	log.Info("Logger enabled!!")
 	//injecting database into the context so we can access it
@@ -58,5 +58,16 @@ func main() {
 	e.POST("/folder/*", serverHandler.CreateFolder)
 	e.GET("/search/*", serverHandler.SearchDocuments)
 
-	e.Logger.Fatal(e.Start(fmt.Sprintf(":%s", serverConfig.ListenAddrPort)))
+	/* 	if serverConfig.UseReverseProxy {
+		reverseProxyUrl, err := url.Parse(serverConfig.BaseURL)
+		if err != nil {
+			e.Logger.Fatal("Unable to parse reverse proxy URL", err)
+		}
+		e.Use(middleware.ProxyWithConfig())
+	} */
+	//var serverIP string
+	if serverConfig.ListenAddrIP == "" {
+		logger.Info("No Ip Addr set, using localhost")
+	}
+	e.Logger.Fatal(e.Start(fmt.Sprintf("%s:%s", serverConfig.ListenAddrIP, serverConfig.ListenAddrPort)))
 }
