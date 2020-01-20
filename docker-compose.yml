@@ -1,0 +1,12 @@
+version: '3'
+services:
+  goedms:
+    build: .
+    ports:
+      - "8000"
+    volumes: 
+      - ./documents:/opt/goEDMS/documents
+      - ./ingress:/opt/goEDMS/ingress
+      - ./temp:/opt/goEDMS/temp
+    sysctls:
+      net.ipv6.conf.all.disable_ipv6: 1

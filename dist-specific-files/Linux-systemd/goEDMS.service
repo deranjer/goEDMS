@@ -1,0 +1,13 @@
+[Unit]
+Description=goEDMS Server
+After=network.target
+
+[Service]
+type=simple
+User=goEDMS
+WorkingDirectory=/opt/goEDMS
+ExecStart=/opt/goEDMS/goEDMS
+Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target

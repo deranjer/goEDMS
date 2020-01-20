@@ -1,10 +1,9 @@
+#goEDMS will look for serverConfig.toml in root or in the config/ directory (if it exists)
 [serverConfig]
-
     ServerPort = "8000" #Required to input as string
     ServerAddr = "192.168.1.8" #Put in the IP address you want to bind to as string
-    #Relative or absolute path accepted, the server will convert any relative path to an absolute path.
 
-[documentLibrary]
+[documentLibrary]     #Relative or absolute path accepted, the server will convert any relative path to an absolute path.
     DocumentFileSystemLocation = 'documents' #Location to store documents
     DefaultNewDocumentFolder = 'New' #default folder that ingressed documents will be placed in (inside the Document library), for multiple folders deep can do '2020/New'
 
@@ -21,10 +20,11 @@
         PreserveDirStructure = true #if nested folders are in the ingress path will copy that existing structure to document storage
         
 [ocr]
-    #Path to Tesseract binary (required for OCR)
-    TesseractBin = "/usr/local/bin/tesseract"
-    #Path to ImageMagick (required for OCR)
-    MagickBin = "/usr/local/bin/magick"
+    #Path to Tesseract binary (required for OCR) #Windows paths need to be formatted as such: "C:\\Program Files\\Tesseract-OCR\\tesseract.exe"
+    TesseractBin = "C:\\Program Files\\Tesseract-OCR\\tesseract.exe"
+    #Path to ImageMagick (required for OCR) 
+    #IMPORTANT For linux, the MagickBin command needs to be to the "convert" binary, for Windows it is "magick.exe"
+    MagickBin = "C:\\Program Files\\ImageMagick-7.0.9-Q16\\magick.exe"
 
 [authentication]
     WebUIAuth = false # bool, if false no authentication is required for the webUI

@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -29,6 +30,8 @@ type ServerConfig struct {
 	ClientUsername       string
 	ClientPassword       string
 	PushBulletToken      string `json:"-"`
+	MagickPath           string
+	TesseractPath        string
 	UseReverseProxy      bool
 	BaseURL              string
 	IngressInterval      int
@@ -90,17 +93,33 @@ func SetupServer() (ServerConfig, *lecho.Logger) {
 	newDocumentPath := filepath.ToSlash(viper.GetString("documentLibrary.DefaultNewDocumentFolder"))
 	serverConfigLive.NewDocumentFolderRel = newDocumentPath
 	serverConfigLive.NewDocumentFolder = filepath.Join(serverConfigLive.DocumentPath, newDocumentPath)
+	serverConfigLive.MagickPath, err = filepath.Abs(filepath.ToSlash(viper.GetString("ocr.MagickBin")))
+	if err != nil {
+		logger.Error("Failed creating absolute path for magick binary", err)
+	}
+	serverConfigLive.TesseractPath, err = filepath.Abs(filepath.ToSlash(viper.GetString("ocr.TesseractBin")))
+	if err != nil {
+		logger.Error("Failed creating absolute path for tesseract binary", err)
+	}
 	serverConfigLive.UseReverseProxy = viper.GetBool("reverseProxy.ProxyEnabled")
 	serverConfigLive.BaseURL = viper.GetString("reverseProxy.BaseURL")
 	os.MkdirAll(serverConfigLive.NewDocumentFolder, os.ModePerm)
-	frontEndConfigLive := setupFrontEnd()
+	frontEndConfigLive := setupFrontEnd(serverConfigLive)
 	serverConfigLive.FrontEndConfig = frontEndConfigLive
 	return serverConfigLive, logger
 }
 
-func setupFrontEnd() FrontEndConfig {
+func setupFrontEnd(serverConfigLive ServerConfig) FrontEndConfig {
 	var frontEndConfigLive FrontEndConfig
 	frontEndConfigLive.NewDocumentNumber = viper.GetInt("frontend.NewDocumentNumber")
+	frontEndURL := fmt.Sprintf("http://%s:%s", serverConfigLive.ListenAddrIP, serverConfigLive.ListenAddrPort)
+	var frontEndJS = fmt.Sprintf(`window['runConfig'] = { 
+		apiUrl: "%s"
+	}`, frontEndURL) //Creating the react API file so the frontend will connect with the backend
+	err := ioutil.WriteFile("public/built/frontend-config.js", []byte(frontEndJS), 0644)
+	if err != nil {
+		fmt.Println("Error writing frontend config to public/built/frontend-config.js", err)
+	}
 	return frontEndConfigLive
 }
 

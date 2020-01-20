@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/asdine/storm"
@@ -43,7 +44,7 @@ func (serverHandler *ServerHandler) ingressDocument(filePath string, source stri
 	case ".pdf":
 		fullText, err := pdfProcessing(filePath)
 		if err != nil {
-			fullText, err = convertToImage(filePath)
+			fullText, err = serverHandler.convertToImage(filePath)
 			if err != nil {
 				Logger.Error("OCR Processing failed on file: ", filePath, err)
 				return
@@ -56,7 +57,7 @@ func (serverHandler *ServerHandler) ingressDocument(filePath string, source stri
 	case ".doc", ".docx", ".odf":
 		wordDocProcessing(filePath)
 	case ".tiff", ".jpg", ".jpeg", ".png":
-		fullText, err := ocrProcessing(filePath)
+		fullText, err := serverHandler.ocrProcessing(filePath)
 		if err != nil {
 			Logger.Error("OCR Processing failed on file: ", filePath, err)
 			return
@@ -208,7 +209,7 @@ func wordDocProcessing(fileName string) {
 
 }
 
-func convertToImage(fileName string) (*string, error) {
+func (serverHandler *ServerHandler) convertToImage(fileName string) (*string, error) {
 	var err error
 	Logger.Info("Converting PDF To image for OCR", fileName)
 	imageName := strings.TrimSuffix(fileName, filepath.Ext(fileName))
@@ -232,8 +233,14 @@ func convertToImage(fileName string) (*string, error) {
 		fmt.Println("ERROR FILE ISSUE", err)
 		return nil, err
 	}
-	convertArgs := []string{"convert", "-density", "150", "-antialias", fileName, "-append", "-resize", "1024x", "-quality", "100", imageName}
-	pdfConvertCmd := exec.Command("magick", convertArgs...)
+	var pdfConvertCmd *exec.Cmd
+	if runtime.GOOS == "windows" {
+		convertArgs := []string{"convert", "-density", "150", "-antialias", fileName, "-append", "-resize", "1024x", "-quality", "100", imageName}
+		pdfConvertCmd = exec.Command(serverHandler.ServerConfig.MagickPath, convertArgs...)
+	} else {
+		convertArgs := []string{"-density", "150", "-antialias", fileName, "-append", "-resize", "1024x", "-quality", "100", imageName}
+		pdfConvertCmd = exec.Command(serverHandler.ServerConfig.MagickPath, convertArgs...)
+	}
 	output, err := pdfConvertCmd.Output()
 	if err != nil {
 		Logger.Error("Unable to convert PDF Using Magick: ", fileName, err)
@@ -242,24 +249,23 @@ func convertToImage(fileName string) (*string, error) {
 	fmt.Println("Outputting image to ", imageName)
 	Logger.Debug("Output from pdfConvertCmd ", string(output))
 	cleanArgs := []string{"convert", imageName, "-auto-orient", "-deskew", "40%", "-despeckle", imageName} //cleaning the resulting image
-	imageCleanCmd := exec.Command("magick", cleanArgs...)
+	imageCleanCmd := exec.Command(serverHandler.ServerConfig.MagickPath, cleanArgs...)
 	output, err = imageCleanCmd.Output()
 	if err != nil {
 		Logger.Error("Magick was unable to clean the image for some reason... skipping this file for now: ", fileName, err)
 		return nil, err
 	}
-	fullText, err := ocrProcessing(imageName)
+	fullText, err := serverHandler.ocrProcessing(imageName)
 	if err != nil {
 		return nil, err
 	}
 	return fullText, nil
 }
 
-func ocrProcessing(imageName string) (*string, error) {
+func (serverHandler *ServerHandler) ocrProcessing(imageName string) (*string, error) {
 	var fullText string
-	//fmt.Println("Output from imageCleanCmd", string(output))
 	tesseractArgs := []string{imageName, "stdout"}
-	tesseractCMD := exec.Command("tesseract", tesseractArgs...) //get the path to tesseract
+	tesseractCMD := exec.Command(serverHandler.ServerConfig.TesseractPath, tesseractArgs...) //get the path to tesseract
 	output, err := tesseractCMD.Output()
 	if err != nil {
 		Logger.Error("Tesseract encountered error when attempting to OCR image: ", imageName, err)

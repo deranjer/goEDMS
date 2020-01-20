@@ -37,6 +37,7 @@ func main() {
 	e := echo.New()
 	serverHandler := engine.ServerHandler{DB: db, SearchDB: searchDB, Echo: e, ServerConfig: serverConfig} //injecting the database into the handler for routes
 	serverHandler.InitializeSchedules(db, searchDB)                                                        //initialize all the cron jobs
+	serverHandler.StartupChecks()                                                                          //Run all the sanity checks
 	e.Logger = Logger
 	e.Use(lecho.Middleware(lecho.Config{
 		Logger: logger}))
