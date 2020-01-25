@@ -120,8 +120,6 @@ func (serverHandler *ServerHandler) DeleteFile(context echo.Context) error {
 
 //UploadDocuments handles documents uploaded from the frontend
 func (serverHandler *ServerHandler) UploadDocuments(context echo.Context) error {
-	//context.Get()
-	//formResult := context.FormValue("file")
 	request := context.Request()
 	uploadPath := request.FormValue("path")
 	file, fileHeader, err := request.FormFile("file")
@@ -144,7 +142,6 @@ func (serverHandler *ServerHandler) UploadDocuments(context echo.Context) error 
 func (serverHandler *ServerHandler) MoveDocuments(context echo.Context) error {
 	var docIDs url.Values
 	var newFolder string
-	//var foundDocuments []database.Document
 	docIDs = context.QueryParams()
 	newFolder = docIDs.Get("folder")
 	fmt.Println("newfolder: ", newFolder)
@@ -175,11 +172,11 @@ func (serverHandler *ServerHandler) SearchDocuments(context echo.Context) error 
 	var phraseSearch bool
 	var searchResults *bleve.SearchResult
 	var err error
-	for _, char := range searchTerm {
+	for _, char := range searchTerm { //TODO, right now both phrase and single term go to same place
 		if unicode.IsSpace(char) { //if there is a space in the result, do a phrase search
 			Logger.Debug("Found space in search term, converting to phrase: ", searchTerm)
 			phraseSearch = true
-			searchResults, err = SearchPhrase(searchTerm, serverHandler.SearchDB)
+			searchResults, err = SearchGeneralPhrase(searchTerm, serverHandler.SearchDB)
 			if err != nil {
 				Logger.Error("Search failed: ", err)
 				return context.JSON(http.StatusInternalServerError, err)
@@ -188,7 +185,7 @@ func (serverHandler *ServerHandler) SearchDocuments(context echo.Context) error 
 	}
 	if !phraseSearch { //if no space found in search term
 		Logger.Debug("Performing Single Term Search: ", searchTerm)
-		searchResults, err = SearchSingleTerm(searchTerm, serverHandler.SearchDB)
+		searchResults, err = SearchGeneralPhrase(searchTerm, serverHandler.SearchDB)
 		if err != nil {
 			Logger.Error("Search returned an error! ", err, searchTerm)
 			return context.JSON(http.StatusInternalServerError, err)
@@ -285,8 +282,6 @@ func fileTree(rootPath string, db *storm.DB) (fileTree *[]fileTreeStruct, err er
 
 	walkFunc := func(path string, info os.FileInfo, err error) error {
 		newTime := time.Now()
-		//fmt.Println("Generating based on time", newTime)
-
 		if err != nil {
 			return err
 		}

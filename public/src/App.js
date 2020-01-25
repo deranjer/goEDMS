@@ -87,11 +87,14 @@ const App = props => {
         setIsSearching(true);
         setSearchTerm(tempSearch)
         setIsSearching(false)
+      } else {
+        setSearchTerm("")
+        console.log("Search cleared!")
       }
     }, [debouncedSearchTerm])
 
     const handleKeyDown = (value) => {
-      if (e.keyCode === 13) {
+      if (value.keyCode === 13) {
         setSearchTerm(tempSearch)
       }
     }

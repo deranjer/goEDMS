@@ -11,3 +11,5 @@ public/dist
 dist
 public/built
 docker
+database.txt
+goEDMS.db.lock

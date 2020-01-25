@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"io/ioutil"
+	"net"
 	"os"
 	"path/filepath"
 
@@ -71,7 +72,7 @@ func SetupServer() (ServerConfig, *lecho.Logger) {
 		logger.Error("Failed creating absolute path for ingress directory", err)
 	}
 	serverConfigLive.IngressPath = ingressDirAbs
-	logger.Infof("Logger is setup")
+	logger.Infof("Base Logger is setup, will switch to echo logger after config complete!")
 	serverConfigLive.ListenAddrPort = viper.GetString("serverConfig.ServerPort")
 	serverConfigLive.ListenAddrIP = viper.GetString("serverConfig.ServerAddr")
 	serverConfigLive.IngressInterval = viper.GetInt("ingress.scheduling.IngressInterval")
@@ -104,23 +105,51 @@ func SetupServer() (ServerConfig, *lecho.Logger) {
 	serverConfigLive.UseReverseProxy = viper.GetBool("reverseProxy.ProxyEnabled")
 	serverConfigLive.BaseURL = viper.GetString("reverseProxy.BaseURL")
 	os.MkdirAll(serverConfigLive.NewDocumentFolder, os.ModePerm)
-	frontEndConfigLive := setupFrontEnd(serverConfigLive)
+	frontEndConfigLive := setupFrontEnd(serverConfigLive, logger)
 	serverConfigLive.FrontEndConfig = frontEndConfigLive
 	return serverConfigLive, logger
 }
 
-func setupFrontEnd(serverConfigLive ServerConfig) FrontEndConfig {
+func setupFrontEnd(serverConfigLive ServerConfig, logger *lecho.Logger) FrontEndConfig {
 	var frontEndConfigLive FrontEndConfig
-	frontEndConfigLive.NewDocumentNumber = viper.GetInt("frontend.NewDocumentNumber")
-	frontEndURL := fmt.Sprintf("http://%s:%s", serverConfigLive.ListenAddrIP, serverConfigLive.ListenAddrPort)
+	var frontEndURL string
+	frontEndConfigLive.NewDocumentNumber = viper.GetInt("frontend.NewDocumentNumber") //number of new documents to display //TODO: maybe not using this...
+	if serverConfigLive.UseReverseProxy {                                             //if using a proxy set the proxy URL
+		frontEndURL = serverConfigLive.BaseURL
+	} else { //If NOT using a proxy determine the IP URL
+		if serverConfigLive.ListenAddrIP == "" { //If no IP listed attempt to discover the default IP addr
+			ipAddr, err := getDefaultIP(logger)
+			if err != nil {
+				logger.Error("WARNING! Unable to determine default IP, frontend-config.js may need to be manually modified for goEDMS to work! ", err)
+				frontEndURL = fmt.Sprintf("http://%s:%s", serverConfigLive.ListenAddrIP, serverConfigLive.ListenAddrPort)
+			} else {
+				frontEndURL = fmt.Sprintf("http://%s:%s", *ipAddr, serverConfigLive.ListenAddrPort)
+			}
+		} else { //If IP addr listed then just use that in the IP URL
+			frontEndURL = fmt.Sprintf("http://%s:%s", serverConfigLive.ListenAddrIP, serverConfigLive.ListenAddrPort)
+		}
+
+	}
 	var frontEndJS = fmt.Sprintf(`window['runConfig'] = { 
 		apiUrl: "%s"
 	}`, frontEndURL) //Creating the react API file so the frontend will connect with the backend
 	err := ioutil.WriteFile("public/built/frontend-config.js", []byte(frontEndJS), 0644)
 	if err != nil {
-		fmt.Println("Error writing frontend config to public/built/frontend-config.js", err)
+		logger.Fatal("Error writing frontend config to public/built/frontend-config.js", err)
 	}
 	return frontEndConfigLive
+}
+
+func getDefaultIP(logger *lecho.Logger) (*string, error) {
+	conn, err := net.Dial("udp", "8.8.8.8:80") //attempting to determine the default IP by connecting out
+	if err != nil {
+		logger.Error("Error discovering Local IP! Either network connection error (outbound connection is used to determine default IP) or error determining default IP!", err)
+		return nil, err
+	}
+	defer conn.Close()
+	localaddr := conn.LocalAddr().(*net.UDPAddr).IP.String()
+	logger.Info("Local IP Determined: ", localaddr)
+	return &localaddr, nil
 }
 
 func setupLogging() *lecho.Logger {
@@ -140,12 +169,30 @@ func setupLogging() *lecho.Logger {
 	default:
 		loglevel = log.WARN
 	}
+	var logWriter *os.File
+	logOutput := viper.GetString("logging.OutputPath")
+	if logOutput == "file" {
+		logPath, err := filepath.Abs(filepath.ToSlash(viper.GetString("logging.LogFileLocation")))
+		if err != nil {
+			fmt.Println("Unable to create log file path: ", err)
+			logPath = "output.log"
+		}
+		logFile, err := os.Create(logPath)
+		if err != nil {
+			fmt.Println("Unable to create log file: ", err)
+			return nil
+		}
+		logWriter = logFile
+		fmt.Println("Logging to file: ", logPath)
+	} else { //TODO: this technically catches EVERYTHING that doesn't say "file"
+		logWriter = os.Stdout
+		fmt.Println("Will be logging to stdout...")
+	}
+
 	logger := lecho.New(
-		os.Stdout,
+		logWriter,
 		lecho.WithLevel(loglevel),
-		lecho.WithFields(map[string]interface{}{"name": "lecho factory"}),
 		lecho.WithTimestamp(),
-		lecho.WithCaller(),
 	)
 	return logger
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
@@ -34,6 +35,7 @@ func main() {
 	defer db.Close()
 	defer searchDB.Close()
 	database.WriteConfigToDB(serverConfig, db) //writing the config to the database
+
 	e := echo.New()
 	serverHandler := engine.ServerHandler{DB: db, SearchDB: searchDB, Echo: e, ServerConfig: serverConfig} //injecting the database into the handler for routes
 	serverHandler.InitializeSchedules(db, searchDB)                                                        //initialize all the cron jobs
@@ -42,11 +44,9 @@ func main() {
 	e.Use(lecho.Middleware(lecho.Config{
 		Logger: logger}))
 	e.Use(middleware.CORSWithConfig(middleware.DefaultCORSConfig))
-
 	e.Static("/", "public/built") //serving up the React Frontend
 	log.Info("Logger enabled!!")
 	//injecting database into the context so we can access it
-
 	//Start the routes
 	e.GET("/home", serverHandler.GetLatestDocuments)
 	e.GET("/documents/filesystem", serverHandler.GetDocumentFileSystem)
@@ -59,16 +59,10 @@ func main() {
 	e.POST("/folder/*", serverHandler.CreateFolder)
 	e.GET("/search/*", serverHandler.SearchDocuments)
 
-	/* 	if serverConfig.UseReverseProxy {
-		reverseProxyUrl, err := url.Parse(serverConfig.BaseURL)
-		if err != nil {
-			e.Logger.Fatal("Unable to parse reverse proxy URL", err)
-		}
-		e.Use(middleware.ProxyWithConfig())
-	} */
-	//var serverIP string
 	if serverConfig.ListenAddrIP == "" {
-		logger.Info("No Ip Addr set, using localhost")
+		logger.Info("No Ip Addr set, binding on ALL addresses")
 	}
+	//e.Logger.Fatal(e.Start(":8000"))
 	e.Logger.Fatal(e.Start(fmt.Sprintf("%s:%s", serverConfig.ListenAddrIP, serverConfig.ListenAddrPort)))
+
 }

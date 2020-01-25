@@ -1,7 +1,7 @@
 #goEDMS will look for serverConfig.toml in root or in the config/ directory (if it exists)
 [serverConfig]
     ServerPort = "8000" #Required to input as string
-    ServerAddr = "192.168.1.8" #Put in the IP address you want to bind to as string
+    ServerAddr = "" #Put in the IP address you want to bind to as string, if blank will bind to all available addresses
 
 [documentLibrary]     #Relative or absolute path accepted, the server will convert any relative path to an absolute path.
     DocumentFileSystemLocation = 'documents' #Location to store documents
@@ -32,22 +32,18 @@
     WebUIPassword = "Password1"
 
 [reverseProxy]
-    #This is for setting up goTorrent behind a reverse Proxy (with SSL)
-    ProxyEnabled = false #bool, either false or true
-    #URL is CASE SENSITIVE
-    BaseURL = "domain.com/subroute/"  # MUST be in the format (if you have a subdomain, and must have trailing slash) "yoursubdomain.domain.org/subroute/"
+    #This is for setting up goTorrent behind a reverse Proxy (with SSL), as a subdomain route (https://goedms.domain.com)
+    ProxyEnabled = true #bool, either false or true
+    #URL is CASE SENSITIVE # MUST be in the subdomain format, NO trailing slash (suburl proxy does not work, i.e. https://domain.com/goedms)
+    BaseURL = "https://goedms.domain.org"  
 
 [frontend]
     NewDocumentNumber = 5 # number of new documents to fetch to view
 
 [logging]
-
     Level = "debug" #debug, info, warn, error, fatal
-    Encoding = "console" #JSON, console
-    OutputPaths = ["stdout", "console"]
-    ErrorOutPutPaths = ["stderr"]
+    OutputPath = "file" #file or stdout
+    LogFileLocation = "goedms.log"
 
 [notifications]
-
     PushBulletToken = "" #add your pushbullet api token here to notify of ingress completion to pushbullet
-
