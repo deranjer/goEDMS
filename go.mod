@@ -19,7 +19,6 @@ require (
 	github.com/facebookgo/ensure v0.0.0-20160127193407-b4ab57deab51 // indirect
 	github.com/facebookgo/stack v0.0.0-20160209184415-751773369052 // indirect
 	github.com/facebookgo/subset v0.0.0-20150612182917-8dac2c3c4870 // indirect
-	github.com/fsnotify/fsnotify v1.4.7
 	github.com/jmhodges/levigo v1.0.0 // indirect
 	github.com/labstack/echo/v4 v4.1.10
 	github.com/labstack/gommon v0.3.0
@@ -37,7 +36,6 @@ require (
 	github.com/ziflex/lecho/v2 v2.0.0
 	golang.org/x/net v0.0.0-20190628185345-da137c7871d7 // indirect
 	golang.org/x/sys v0.0.0-20191002091554-b397fe3ad8ed // indirect
-	gopkg.in/fsnotify.v1 v1.4.7
 )
 
 replace github.com/deranjer/goEDMS => ../goEDMS
