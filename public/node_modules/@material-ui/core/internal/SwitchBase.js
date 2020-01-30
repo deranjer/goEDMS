@@ -9,6 +9,8 @@ exports.default = exports.styles = void 0;
 
 var _extends2 = _interopRequireDefault(require("@babel/runtime/helpers/extends"));
 
+var _slicedToArray2 = _interopRequireDefault(require("@babel/runtime/helpers/slicedToArray"));
+
 var _objectWithoutProperties2 = _interopRequireDefault(require("@babel/runtime/helpers/objectWithoutProperties"));
 
 var _react = _interopRequireDefault(require("react"));
@@ -18,6 +20,8 @@ var _propTypes = _interopRequireDefault(require("prop-types"));
 var _clsx = _interopRequireDefault(require("clsx"));
 
 var _utils = require("@material-ui/utils");
+
+var _useControlled3 = _interopRequireDefault(require("../utils/useControlled"));
 
 var _useFormControl = _interopRequireDefault(require("../FormControl/useFormControl"));
 
@@ -73,14 +77,15 @@ var SwitchBase = _react.default.forwardRef(function SwitchBase(props, ref) {
       value = props.value,
       other = (0, _objectWithoutProperties2.default)(props, ["autoFocus", "checked", "checkedIcon", "classes", "className", "defaultChecked", "disabled", "icon", "id", "inputProps", "inputRef", "name", "onBlur", "onChange", "onFocus", "readOnly", "required", "tabIndex", "type", "value"]);
 
-  var _React$useRef = _react.default.useRef(checkedProp != null),
-      isControlled = _React$useRef.current;
+  var _useControlled = (0, _useControlled3.default)({
+    controlled: checkedProp,
+    default: Boolean(defaultChecked),
+    name: 'SwitchBase'
+  }),
+      _useControlled2 = (0, _slicedToArray2.default)(_useControlled, 2),
+      checked = _useControlled2[0],
+      setCheckedState = _useControlled2[1];
 
-  var _React$useState = _react.default.useState(Boolean(defaultChecked)),
-      checkedState = _React$useState[0],
-      setCheckedState = _React$useState[1];
-
-  var checked = isControlled ? checkedProp : checkedState;
   var muiFormControl = (0, _useFormControl.default)();
 
   var handleFocus = function handleFocus(event) {
@@ -105,10 +110,7 @@ var SwitchBase = _react.default.forwardRef(function SwitchBase(props, ref) {
 
   var handleInputChange = function handleInputChange(event) {
     var newChecked = event.target.checked;
-
-    if (!isControlled) {
-      setCheckedState(newChecked);
-    }
+    setCheckedState(newChecked);
 
     if (onChange) {
       onChange(event, newChecked);

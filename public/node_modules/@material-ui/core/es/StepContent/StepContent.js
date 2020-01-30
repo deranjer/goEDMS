@@ -31,13 +31,14 @@ const StepContent = React.forwardRef(function StepContent(props, ref) {
     children,
     classes,
     className,
+    expanded,
     last,
     orientation,
     TransitionComponent = Collapse,
     transitionDuration: transitionDurationProp = 'auto',
     TransitionProps
   } = props,
-        other = _objectWithoutPropertiesLoose(props, ["active", "alternativeLabel", "children", "classes", "className", "completed", "last", "optional", "orientation", "TransitionComponent", "transitionDuration", "TransitionProps"]);
+        other = _objectWithoutPropertiesLoose(props, ["active", "alternativeLabel", "children", "classes", "className", "completed", "expanded", "last", "optional", "orientation", "TransitionComponent", "transitionDuration", "TransitionProps"]);
 
   if (process.env.NODE_ENV !== 'production') {
     if (orientation !== 'vertical') {
@@ -55,7 +56,7 @@ const StepContent = React.forwardRef(function StepContent(props, ref) {
     className: clsx(classes.root, className, last && classes.last),
     ref: ref
   }, other), React.createElement(TransitionComponent, _extends({
-    in: active,
+    in: active || expanded,
     className: classes.transition,
     timeout: transitionDuration,
     unmountOnExit: true
@@ -98,6 +99,11 @@ process.env.NODE_ENV !== "production" ? StepContent.propTypes = {
   /**
    * @ignore
    */
+  expanded: PropTypes.bool,
+
+  /**
+   * @ignore
+   */
   last: PropTypes.bool,
 
   /**
@@ -113,6 +119,7 @@ process.env.NODE_ENV !== "production" ? StepContent.propTypes = {
 
   /**
    * The component used for the transition.
+   * [Follow this guide](/components/transitions/#transitioncomponent-prop) to learn more about the requirements for this component.
    */
   TransitionComponent: PropTypes.elementType,
 
@@ -128,7 +135,7 @@ process.env.NODE_ENV !== "production" ? StepContent.propTypes = {
   }), PropTypes.oneOf(['auto'])]),
 
   /**
-   * Props applied to the `Transition` element.
+   * Props applied to the [`Transition`](http://reactcommunity.org/react-transition-group/transition#Transition-props) element.
    */
   TransitionProps: PropTypes.object
 } : void 0;

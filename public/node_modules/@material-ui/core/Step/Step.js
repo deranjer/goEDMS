@@ -57,10 +57,12 @@ var Step = _react.default.forwardRef(function Step(props, ref) {
       connector = props.connector,
       _props$disabled = props.disabled,
       disabled = _props$disabled === void 0 ? false : _props$disabled,
+      _props$expanded = props.expanded,
+      expanded = _props$expanded === void 0 ? false : _props$expanded,
       index = props.index,
       last = props.last,
       orientation = props.orientation,
-      other = (0, _objectWithoutProperties2.default)(props, ["active", "alternativeLabel", "children", "classes", "className", "completed", "connector", "disabled", "index", "last", "orientation"]);
+      other = (0, _objectWithoutProperties2.default)(props, ["active", "alternativeLabel", "children", "classes", "className", "completed", "connector", "disabled", "expanded", "index", "last", "orientation"]);
   return _react.default.createElement("div", (0, _extends2.default)({
     className: (0, _clsx.default)(classes.root, classes[orientation], className, alternativeLabel && classes.alternativeLabel, completed && classes.completed),
     ref: ref
@@ -87,6 +89,7 @@ var Step = _react.default.forwardRef(function Step(props, ref) {
       alternativeLabel: alternativeLabel,
       completed: completed,
       disabled: disabled,
+      expanded: expanded,
       last: last,
       icon: index + 1,
       orientation: orientation
@@ -138,6 +141,11 @@ process.env.NODE_ENV !== "production" ? Step.propTypes = {
    * `StepButton` is a child of `Step`. Is passed to child components.
    */
   disabled: _propTypes.default.bool,
+
+  /**
+   * Expand the step.
+   */
+  expanded: _propTypes.default.bool,
 
   /**
    * @ignore

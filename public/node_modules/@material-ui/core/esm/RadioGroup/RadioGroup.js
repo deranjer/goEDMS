@@ -1,9 +1,11 @@
 import _extends from "@babel/runtime/helpers/esm/extends";
+import _slicedToArray from "@babel/runtime/helpers/esm/slicedToArray";
 import _objectWithoutProperties from "@babel/runtime/helpers/esm/objectWithoutProperties";
 import React from 'react';
 import PropTypes from 'prop-types';
 import FormGroup from '../FormGroup';
 import useForkRef from '../utils/useForkRef';
+import useControlled from '../utils/useControlled';
 import RadioGroupContext from './RadioGroupContext';
 var RadioGroup = React.forwardRef(function RadioGroup(props, ref) {
   var actions = props.actions,
@@ -15,23 +17,14 @@ var RadioGroup = React.forwardRef(function RadioGroup(props, ref) {
 
   var rootRef = React.useRef(null);
 
-  var _React$useRef = React.useRef(valueProp != null),
-      isControlled = _React$useRef.current;
-
-  var _React$useState = React.useState(props.defaultValue),
-      valueState = _React$useState[0],
-      setValue = _React$useState[1];
-
-  var value = isControlled ? valueProp : valueState;
-
-  if (process.env.NODE_ENV !== 'production') {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    React.useEffect(function () {
-      if (isControlled !== (valueProp != null)) {
-        console.error(["Material-UI: A component is changing ".concat(isControlled ? 'a ' : 'an un', "controlled RadioGroup to be ").concat(isControlled ? 'un' : '', "controlled."), 'Elements should not switch from uncontrolled to controlled (or vice versa).', 'Decide between using a controlled or uncontrolled RadioGroup ' + 'element for the lifetime of the component.', 'More info: https://fb.me/react-controlled-components'].join('\n'));
-      }
-    }, [valueProp, isControlled]);
-  }
+  var _useControlled = useControlled({
+    controlled: valueProp,
+    default: props.defaultValue,
+    name: 'RadioGroup'
+  }),
+      _useControlled2 = _slicedToArray(_useControlled, 2),
+      value = _useControlled2[0],
+      setValue = _useControlled2[1];
 
   React.useImperativeHandle(actions, function () {
     return {
@@ -51,9 +44,7 @@ var RadioGroup = React.forwardRef(function RadioGroup(props, ref) {
   var handleRef = useForkRef(ref, rootRef);
 
   var handleChange = function handleChange(event) {
-    if (!isControlled) {
-      setValue(event.target.value);
-    }
+    setValue(event.target.value);
 
     if (onChange) {
       onChange(event, event.target.value);

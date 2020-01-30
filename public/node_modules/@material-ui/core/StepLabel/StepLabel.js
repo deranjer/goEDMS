@@ -112,6 +112,7 @@ var StepLabel = _react.default.forwardRef(function StepLabel(props, ref) {
       disabled = _props$disabled === void 0 ? false : _props$disabled,
       _props$error = props.error,
       error = _props$error === void 0 ? false : _props$error,
+      expanded = props.expanded,
       icon = props.icon,
       last = props.last,
       optional = props.optional,
@@ -119,7 +120,7 @@ var StepLabel = _react.default.forwardRef(function StepLabel(props, ref) {
       orientation = _props$orientation === void 0 ? 'horizontal' : _props$orientation,
       StepIconComponentProp = props.StepIconComponent,
       StepIconProps = props.StepIconProps,
-      other = (0, _objectWithoutProperties2.default)(props, ["active", "alternativeLabel", "children", "classes", "className", "completed", "disabled", "error", "icon", "last", "optional", "orientation", "StepIconComponent", "StepIconProps"]);
+      other = (0, _objectWithoutProperties2.default)(props, ["active", "alternativeLabel", "children", "classes", "className", "completed", "disabled", "error", "expanded", "icon", "last", "optional", "orientation", "StepIconComponent", "StepIconProps"]);
   var StepIconComponent = StepIconComponentProp;
 
   if (icon && !StepIconComponent) {
@@ -149,13 +150,11 @@ var StepLabel = _react.default.forwardRef(function StepLabel(props, ref) {
 process.env.NODE_ENV !== "production" ? StepLabel.propTypes = {
   /**
    * @ignore
-   * Sets the step as active. Is passed to child components.
    */
   active: _propTypes.default.bool,
 
   /**
    * @ignore
-   * Set internally by Stepper when it's supplied with the alternativeLabel prop.
    */
   alternativeLabel: _propTypes.default.bool,
 
@@ -177,7 +176,6 @@ process.env.NODE_ENV !== "production" ? StepLabel.propTypes = {
 
   /**
    * @ignore
-   * Mark the step as completed. Is passed to child components.
    */
   completed: _propTypes.default.bool,
 
@@ -191,6 +189,11 @@ process.env.NODE_ENV !== "production" ? StepLabel.propTypes = {
    * Mark the step as failed.
    */
   error: _propTypes.default.bool,
+
+  /**
+   * @ignore
+   */
+  expanded: _propTypes.default.bool,
 
   /**
    * Override the default label of the step icon.

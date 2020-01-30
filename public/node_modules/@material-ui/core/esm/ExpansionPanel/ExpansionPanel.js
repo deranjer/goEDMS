@@ -1,5 +1,6 @@
 import _extends from "@babel/runtime/helpers/esm/extends";
 import _toArray from "@babel/runtime/helpers/esm/toArray";
+import _slicedToArray from "@babel/runtime/helpers/esm/slicedToArray";
 import _objectWithoutProperties from "@babel/runtime/helpers/esm/objectWithoutProperties";
 import React from 'react';
 import { isFragment } from 'react-is';
@@ -10,6 +11,7 @@ import Collapse from '../Collapse';
 import Paper from '../Paper';
 import withStyles from '../styles/withStyles';
 import ExpansionPanelContext from './ExpansionPanelContext';
+import useControlled from '../utils/useControlled';
 export var styles = function styles(theme) {
   var transition = {
     duration: theme.transitions.duration.shortest
@@ -99,33 +101,22 @@ var ExpansionPanel = React.forwardRef(function ExpansionPanel(props, ref) {
       TransitionProps = props.TransitionProps,
       other = _objectWithoutProperties(props, ["children", "classes", "className", "defaultExpanded", "disabled", "expanded", "onChange", "square", "TransitionComponent", "TransitionProps"]);
 
-  var _React$useRef = React.useRef(expandedProp != null),
-      isControlled = _React$useRef.current;
-
-  var _React$useState = React.useState(defaultExpanded),
-      expandedState = _React$useState[0],
-      setExpandedState = _React$useState[1];
-
-  var expanded = isControlled ? expandedProp : expandedState;
-
-  if (process.env.NODE_ENV !== 'production') {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    React.useEffect(function () {
-      if (isControlled !== (expandedProp != null)) {
-        console.error(["Material-UI: A component is changing ".concat(isControlled ? 'a ' : 'an un', "controlled ExpansionPanel to be ").concat(isControlled ? 'un' : '', "controlled."), 'Elements should not switch from uncontrolled to controlled (or vice versa).', 'Decide between using a controlled or uncontrolled ExpansionPanel ' + 'element for the lifetime of the component.', 'More info: https://fb.me/react-controlled-components'].join('\n'));
-      }
-    }, [expandedProp, isControlled]);
-  }
+  var _useControlled = useControlled({
+    controlled: expandedProp,
+    default: defaultExpanded,
+    name: 'ExpansionPanel'
+  }),
+      _useControlled2 = _slicedToArray(_useControlled, 2),
+      expanded = _useControlled2[0],
+      setExpandedState = _useControlled2[1];
 
   var handleChange = React.useCallback(function (event) {
-    if (!isControlled) {
-      setExpandedState(!expanded);
-    }
+    setExpandedState(!expanded);
 
     if (onChange) {
       onChange(event, !expanded);
     }
-  }, [expanded, isControlled, onChange]);
+  }, [expanded, onChange, setExpandedState]);
 
   var _React$Children$toArr = React.Children.toArray(childrenProp),
       _React$Children$toArr2 = _toArray(_React$Children$toArr),
@@ -214,11 +205,12 @@ process.env.NODE_ENV !== "production" ? ExpansionPanel.propTypes = {
 
   /**
    * The component used for the collapse effect.
+   * [Follow this guide](/components/transitions/#transitioncomponent-prop) to learn more about the requirements for this component.
    */
   TransitionComponent: PropTypes.elementType,
 
   /**
-   * Props applied to the `Transition` element.
+   * Props applied to the [`Transition`](http://reactcommunity.org/react-transition-group/transition#Transition-props) element.
    */
   TransitionProps: PropTypes.object
 } : void 0;

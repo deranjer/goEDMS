@@ -80,8 +80,8 @@ process.env.NODE_ENV !== "production" ? BottomNavigation.propTypes = {
   /**
    * Callback fired when the value changes.
    *
-   * @param {object} event The event source of the callback
-   * @param {any} value We default to the index of the child
+   * @param {object} event The event source of the callback.
+   * @param {any} value We default to the index of the child.
    */
   onChange: PropTypes.func,
 

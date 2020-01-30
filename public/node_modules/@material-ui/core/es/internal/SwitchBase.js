@@ -4,6 +4,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import clsx from 'clsx';
 import { refType } from '@material-ui/utils';
+import useControlled from '../utils/useControlled';
 import useFormControl from '../FormControl/useFormControl';
 import withStyles from '../styles/withStyles';
 import IconButton from '../IconButton';
@@ -55,11 +56,11 @@ const SwitchBase = React.forwardRef(function SwitchBase(props, ref) {
   } = props,
         other = _objectWithoutPropertiesLoose(props, ["autoFocus", "checked", "checkedIcon", "classes", "className", "defaultChecked", "disabled", "icon", "id", "inputProps", "inputRef", "name", "onBlur", "onChange", "onFocus", "readOnly", "required", "tabIndex", "type", "value"]);
 
-  const {
-    current: isControlled
-  } = React.useRef(checkedProp != null);
-  const [checkedState, setCheckedState] = React.useState(Boolean(defaultChecked));
-  const checked = isControlled ? checkedProp : checkedState;
+  const [checked, setCheckedState] = useControlled({
+    controlled: checkedProp,
+    default: Boolean(defaultChecked),
+    name: 'SwitchBase'
+  });
   const muiFormControl = useFormControl();
 
   const handleFocus = event => {
@@ -84,10 +85,7 @@ const SwitchBase = React.forwardRef(function SwitchBase(props, ref) {
 
   const handleInputChange = event => {
     const newChecked = event.target.checked;
-
-    if (!isControlled) {
-      setCheckedState(newChecked);
-    }
+    setCheckedState(newChecked);
 
     if (onChange) {
       onChange(event, newChecked);

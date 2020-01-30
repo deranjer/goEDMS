@@ -4,6 +4,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import FormGroup from '../FormGroup';
 import useForkRef from '../utils/useForkRef';
+import useControlled from '../utils/useControlled';
 import RadioGroupContext from './RadioGroupContext';
 const RadioGroup = React.forwardRef(function RadioGroup(props, ref) {
   const {
@@ -16,21 +17,11 @@ const RadioGroup = React.forwardRef(function RadioGroup(props, ref) {
         other = _objectWithoutPropertiesLoose(props, ["actions", "children", "name", "value", "onChange"]);
 
   const rootRef = React.useRef(null);
-  const {
-    current: isControlled
-  } = React.useRef(valueProp != null);
-  const [valueState, setValue] = React.useState(props.defaultValue);
-  const value = isControlled ? valueProp : valueState;
-
-  if (process.env.NODE_ENV !== 'production') {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    React.useEffect(() => {
-      if (isControlled !== (valueProp != null)) {
-        console.error([`Material-UI: A component is changing ${isControlled ? 'a ' : 'an un'}controlled RadioGroup to be ${isControlled ? 'un' : ''}controlled.`, 'Elements should not switch from uncontrolled to controlled (or vice versa).', 'Decide between using a controlled or uncontrolled RadioGroup ' + 'element for the lifetime of the component.', 'More info: https://fb.me/react-controlled-components'].join('\n'));
-      }
-    }, [valueProp, isControlled]);
-  }
-
+  const [value, setValue] = useControlled({
+    controlled: valueProp,
+    default: props.defaultValue,
+    name: 'RadioGroup'
+  });
   React.useImperativeHandle(actions, () => ({
     focus: () => {
       let input = rootRef.current.querySelector('input:not(:disabled):checked');
@@ -47,9 +38,7 @@ const RadioGroup = React.forwardRef(function RadioGroup(props, ref) {
   const handleRef = useForkRef(ref, rootRef);
 
   const handleChange = event => {
-    if (!isControlled) {
-      setValue(event.target.value);
-    }
+    setValue(event.target.value);
 
     if (onChange) {
       onChange(event, event.target.value);

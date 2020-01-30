@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = void 0;
+exports.default = requirePropFactory;
 
 function requirePropFactory(componentNameInError) {
   if (process.env.NODE_ENV === 'production') {
@@ -26,6 +26,3 @@ function requirePropFactory(componentNameInError) {
 
   return requireProp;
 }
-
-var _default = requirePropFactory;
-exports.default = _default;

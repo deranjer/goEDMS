@@ -39,11 +39,12 @@ var StepButton = React.forwardRef(function StepButton(props, ref) {
       className = props.className,
       completed = props.completed,
       disabled = props.disabled,
+      expanded = props.expanded,
       icon = props.icon,
       last = props.last,
       optional = props.optional,
       orientation = props.orientation,
-      other = _objectWithoutProperties(props, ["active", "alternativeLabel", "children", "classes", "className", "completed", "disabled", "icon", "last", "optional", "orientation"]);
+      other = _objectWithoutProperties(props, ["active", "alternativeLabel", "children", "classes", "className", "completed", "disabled", "expanded", "icon", "last", "optional", "orientation"]);
 
   var childProps = {
     active: active,
@@ -104,6 +105,12 @@ process.env.NODE_ENV !== "production" ? StepButton.propTypes = {
    * Disables the button and sets disabled styling. Is passed to StepLabel.
    */
   disabled: PropTypes.bool,
+
+  /**
+   * @ignore
+   * potentially passed from parent `Step`
+   */
+  expanded: PropTypes.bool,
 
   /**
    * The icon displayed by the step label.

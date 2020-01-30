@@ -37,11 +37,12 @@ const Step = React.forwardRef(function Step(props, ref) {
     completed = false,
     connector,
     disabled = false,
+    expanded = false,
     index,
     last,
     orientation
   } = props,
-        other = _objectWithoutPropertiesLoose(props, ["active", "alternativeLabel", "children", "classes", "className", "completed", "connector", "disabled", "index", "last", "orientation"]);
+        other = _objectWithoutPropertiesLoose(props, ["active", "alternativeLabel", "children", "classes", "className", "completed", "connector", "disabled", "expanded", "index", "last", "orientation"]);
 
   return React.createElement("div", _extends({
     className: clsx(classes.root, classes[orientation], className, alternativeLabel && classes.alternativeLabel, completed && classes.completed),
@@ -69,6 +70,7 @@ const Step = React.forwardRef(function Step(props, ref) {
       alternativeLabel,
       completed,
       disabled,
+      expanded,
       last,
       icon: index + 1,
       orientation
@@ -119,6 +121,11 @@ process.env.NODE_ENV !== "production" ? Step.propTypes = {
    * `StepButton` is a child of `Step`. Is passed to child components.
    */
   disabled: PropTypes.bool,
+
+  /**
+   * Expand the step.
+   */
+  expanded: PropTypes.bool,
 
   /**
    * @ignore

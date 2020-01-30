@@ -1,9 +1,11 @@
 import _extends from "@babel/runtime/helpers/esm/extends";
+import _slicedToArray from "@babel/runtime/helpers/esm/slicedToArray";
 import _objectWithoutProperties from "@babel/runtime/helpers/esm/objectWithoutProperties";
 import React from 'react';
 import PropTypes from 'prop-types';
 import clsx from 'clsx';
 import { refType } from '@material-ui/utils';
+import useControlled from '../utils/useControlled';
 import useFormControl from '../FormControl/useFormControl';
 import withStyles from '../styles/withStyles';
 import IconButton from '../IconButton';
@@ -53,14 +55,15 @@ var SwitchBase = React.forwardRef(function SwitchBase(props, ref) {
       value = props.value,
       other = _objectWithoutProperties(props, ["autoFocus", "checked", "checkedIcon", "classes", "className", "defaultChecked", "disabled", "icon", "id", "inputProps", "inputRef", "name", "onBlur", "onChange", "onFocus", "readOnly", "required", "tabIndex", "type", "value"]);
 
-  var _React$useRef = React.useRef(checkedProp != null),
-      isControlled = _React$useRef.current;
+  var _useControlled = useControlled({
+    controlled: checkedProp,
+    default: Boolean(defaultChecked),
+    name: 'SwitchBase'
+  }),
+      _useControlled2 = _slicedToArray(_useControlled, 2),
+      checked = _useControlled2[0],
+      setCheckedState = _useControlled2[1];
 
-  var _React$useState = React.useState(Boolean(defaultChecked)),
-      checkedState = _React$useState[0],
-      setCheckedState = _React$useState[1];
-
-  var checked = isControlled ? checkedProp : checkedState;
   var muiFormControl = useFormControl();
 
   var handleFocus = function handleFocus(event) {
@@ -85,10 +88,7 @@ var SwitchBase = React.forwardRef(function SwitchBase(props, ref) {
 
   var handleInputChange = function handleInputChange(event) {
     var newChecked = event.target.checked;
-
-    if (!isControlled) {
-      setCheckedState(newChecked);
-    }
+    setCheckedState(newChecked);
 
     if (onChange) {
       onChange(event, newChecked);

@@ -1,4 +1,4 @@
-function requirePropFactory(componentNameInError) {
+export default function requirePropFactory(componentNameInError) {
   if (process.env.NODE_ENV === 'production') {
     return () => null;
   }
@@ -15,5 +15,3 @@ function requirePropFactory(componentNameInError) {
 
   return requireProp;
 }
-
-export default requirePropFactory;

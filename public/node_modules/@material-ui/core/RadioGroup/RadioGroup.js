@@ -9,6 +9,8 @@ exports.default = void 0;
 
 var _extends2 = _interopRequireDefault(require("@babel/runtime/helpers/extends"));
 
+var _slicedToArray2 = _interopRequireDefault(require("@babel/runtime/helpers/slicedToArray"));
+
 var _objectWithoutProperties2 = _interopRequireDefault(require("@babel/runtime/helpers/objectWithoutProperties"));
 
 var _react = _interopRequireDefault(require("react"));
@@ -18,6 +20,8 @@ var _propTypes = _interopRequireDefault(require("prop-types"));
 var _FormGroup = _interopRequireDefault(require("../FormGroup"));
 
 var _useForkRef = _interopRequireDefault(require("../utils/useForkRef"));
+
+var _useControlled3 = _interopRequireDefault(require("../utils/useControlled"));
 
 var _RadioGroupContext = _interopRequireDefault(require("./RadioGroupContext"));
 
@@ -31,23 +35,14 @@ var RadioGroup = _react.default.forwardRef(function RadioGroup(props, ref) {
 
   var rootRef = _react.default.useRef(null);
 
-  var _React$useRef = _react.default.useRef(valueProp != null),
-      isControlled = _React$useRef.current;
-
-  var _React$useState = _react.default.useState(props.defaultValue),
-      valueState = _React$useState[0],
-      setValue = _React$useState[1];
-
-  var value = isControlled ? valueProp : valueState;
-
-  if (process.env.NODE_ENV !== 'production') {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    _react.default.useEffect(function () {
-      if (isControlled !== (valueProp != null)) {
-        console.error(["Material-UI: A component is changing ".concat(isControlled ? 'a ' : 'an un', "controlled RadioGroup to be ").concat(isControlled ? 'un' : '', "controlled."), 'Elements should not switch from uncontrolled to controlled (or vice versa).', 'Decide between using a controlled or uncontrolled RadioGroup ' + 'element for the lifetime of the component.', 'More info: https://fb.me/react-controlled-components'].join('\n'));
-      }
-    }, [valueProp, isControlled]);
-  }
+  var _useControlled = (0, _useControlled3.default)({
+    controlled: valueProp,
+    default: props.defaultValue,
+    name: 'RadioGroup'
+  }),
+      _useControlled2 = (0, _slicedToArray2.default)(_useControlled, 2),
+      value = _useControlled2[0],
+      setValue = _useControlled2[1];
 
   _react.default.useImperativeHandle(actions, function () {
     return {
@@ -68,9 +63,7 @@ var RadioGroup = _react.default.forwardRef(function RadioGroup(props, ref) {
   var handleRef = (0, _useForkRef.default)(ref, rootRef);
 
   var handleChange = function handleChange(event) {
-    if (!isControlled) {
-      setValue(event.target.value);
-    }
+    setValue(event.target.value);
 
     if (onChange) {
       onChange(event, event.target.value);

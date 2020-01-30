@@ -5,7 +5,7 @@ var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefau
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = void 0;
+exports.default = ownerWindow;
 
 var _ownerDocument = _interopRequireDefault(require("./ownerDocument"));
 
@@ -13,6 +13,3 @@ function ownerWindow(node) {
   var doc = (0, _ownerDocument.default)(node);
   return doc.defaultView || window;
 }
-
-var _default = ownerWindow;
-exports.default = _default;

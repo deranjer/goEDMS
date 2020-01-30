@@ -27,15 +27,10 @@ export var duration = {
   // recommended when something is leaving screen
   leavingScreen: 195
 };
-export var formatMs = function formatMs(milliseconds) {
+
+function formatMs(milliseconds) {
   return "".concat(Math.round(milliseconds), "ms");
-};
-export var isString = function isString(value) {
-  return typeof value === 'string';
-};
-export var isNumber = function isNumber(value) {
-  return !isNaN(parseFloat(value));
-};
+}
 /**
  * @param {string|Array} props
  * @param {object} param
@@ -44,6 +39,7 @@ export var isNumber = function isNumber(value) {
  * @param {string} param.easing
  * @param {number} param.delay
  */
+
 
 export default {
   easing: easing,
@@ -61,6 +57,14 @@ export default {
         other = _objectWithoutProperties(options, ["duration", "easing", "delay"]);
 
     if (process.env.NODE_ENV !== 'production') {
+      var isString = function isString(value) {
+        return typeof value === 'string';
+      };
+
+      var isNumber = function isNumber(value) {
+        return !isNaN(parseFloat(value));
+      };
+
       if (!isString(props) && !Array.isArray(props)) {
         console.error('Material-UI: argument "props" must be a string or Array.');
       }

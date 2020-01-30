@@ -34,7 +34,6 @@ var styles = function styles(theme) {
         duration: theme.transitions.duration.shortest
       }),
       top: -34,
-      left: 'calc(-50% + -4px)',
       transformOrigin: 'bottom center',
       transform: 'scale(0)',
       position: 'absolute'

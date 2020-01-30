@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = void 0;
+exports.default = unsupportedProp;
 
 function unsupportedProp(props, propName, componentName, location, propFullName) {
   if (process.env.NODE_ENV === 'production') {
@@ -18,6 +18,3 @@ function unsupportedProp(props, propName, componentName, location, propFullName)
 
   return null;
 }
-
-var _default = unsupportedProp;
-exports.default = _default;

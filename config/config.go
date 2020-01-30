@@ -42,6 +42,7 @@ type ServerConfig struct {
 //FrontEndConfig stores all of the frontend settings
 type FrontEndConfig struct {
 	NewDocumentNumber int
+	ServerAPIURL      string
 }
 
 func defaultConfig() ServerConfig { //TODO: Do I even bother, if config fails most likely not worth continuing
@@ -114,21 +115,27 @@ func setupFrontEnd(serverConfigLive ServerConfig, logger *lecho.Logger) FrontEnd
 	var frontEndConfigLive FrontEndConfig
 	var frontEndURL string
 	frontEndConfigLive.NewDocumentNumber = viper.GetInt("frontend.NewDocumentNumber") //number of new documents to display //TODO: maybe not using this...
-	if serverConfigLive.UseReverseProxy {                                             //if using a proxy set the proxy URL
-		frontEndURL = serverConfigLive.BaseURL
-	} else { //If NOT using a proxy determine the IP URL
-		if serverConfigLive.ListenAddrIP == "" { //If no IP listed attempt to discover the default IP addr
-			ipAddr, err := getDefaultIP(logger)
-			if err != nil {
-				logger.Error("WARNING! Unable to determine default IP, frontend-config.js may need to be manually modified for goEDMS to work! ", err)
+	frontEndConfigLive.ServerAPIURL = viper.GetString("serverConfig.APIURL")          //Used for docker to manually specify URL for backend
+	//TODO add check for docker container api URL and generate it here
+	if frontEndConfigLive.ServerAPIURL != "" { //if this is NOT blank it is docker specifying the URL
+		frontEndURL = fmt.Sprintf("http://%s", frontEndConfigLive.ServerAPIURL)
+	} else {
+		if serverConfigLive.UseReverseProxy { //if using a proxy set the proxy URL
+			frontEndURL = serverConfigLive.BaseURL
+		} else { //If NOT using a proxy determine the IP URL
+			if serverConfigLive.ListenAddrIP == "" { //If no IP listed attempt to discover the default IP addr
+				ipAddr, err := getDefaultIP(logger)
+				if err != nil {
+					logger.Error("WARNING! Unable to determine default IP, frontend-config.js may need to be manually modified for goEDMS to work! ", err)
+					frontEndURL = fmt.Sprintf("http://%s:%s", serverConfigLive.ListenAddrIP, serverConfigLive.ListenAddrPort)
+				} else {
+					frontEndURL = fmt.Sprintf("http://%s:%s", *ipAddr, serverConfigLive.ListenAddrPort)
+				}
+			} else { //If IP addr listed then just use that in the IP URL
 				frontEndURL = fmt.Sprintf("http://%s:%s", serverConfigLive.ListenAddrIP, serverConfigLive.ListenAddrPort)
-			} else {
-				frontEndURL = fmt.Sprintf("http://%s:%s", *ipAddr, serverConfigLive.ListenAddrPort)
 			}
-		} else { //If IP addr listed then just use that in the IP URL
-			frontEndURL = fmt.Sprintf("http://%s:%s", serverConfigLive.ListenAddrIP, serverConfigLive.ListenAddrPort)
-		}
 
+		}
 	}
 	var frontEndJS = fmt.Sprintf(`window['runConfig'] = { 
 		apiUrl: "%s"

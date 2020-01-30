@@ -65,6 +65,12 @@ Object.defineProperty(exports, "useForkRef", {
     return _useForkRef.default;
   }
 });
+Object.defineProperty(exports, "useControlled", {
+  enumerable: true,
+  get: function get() {
+    return _useControlled.default;
+  }
+});
 Object.defineProperty(exports, "useIsFocusVisible", {
   enumerable: true,
   get: function get() {
@@ -91,5 +97,7 @@ var _unsupportedProp = _interopRequireDefault(require("./unsupportedProp"));
 var _useEventCallback = _interopRequireDefault(require("./useEventCallback"));
 
 var _useForkRef = _interopRequireDefault(require("./useForkRef"));
+
+var _useControlled = _interopRequireDefault(require("./useControlled"));
 
 var _focusVisible = require("./focusVisible");

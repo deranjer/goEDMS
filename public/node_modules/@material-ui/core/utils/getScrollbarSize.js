@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = void 0;
+exports.default = getScrollbarSize;
 
 // A change of the browser zoom change the scrollbar size.
 // Credit https://github.com/twbs/bootstrap/blob/3ffe3a5d82f6f561b82ff78d82b32a7d14aed558/js/src/modal.js#L512-L519
@@ -19,6 +19,3 @@ function getScrollbarSize() {
   document.body.removeChild(scrollDiv);
   return scrollbarSize;
 }
-
-var _default = getScrollbarSize;
-exports.default = _default;

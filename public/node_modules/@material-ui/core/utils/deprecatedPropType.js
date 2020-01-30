@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = void 0;
+exports.default = deprecatedPropType;
 
 function deprecatedPropType(validator, reason) {
   if (process.env.NODE_ENV === 'production') {
@@ -23,6 +23,3 @@ function deprecatedPropType(validator, reason) {
     return null;
   };
 }
-
-var _default = deprecatedPropType;
-exports.default = _default;

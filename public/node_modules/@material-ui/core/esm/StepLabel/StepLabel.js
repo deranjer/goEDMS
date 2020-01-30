@@ -92,6 +92,7 @@ var StepLabel = React.forwardRef(function StepLabel(props, ref) {
       disabled = _props$disabled === void 0 ? false : _props$disabled,
       _props$error = props.error,
       error = _props$error === void 0 ? false : _props$error,
+      expanded = props.expanded,
       icon = props.icon,
       last = props.last,
       optional = props.optional,
@@ -99,7 +100,7 @@ var StepLabel = React.forwardRef(function StepLabel(props, ref) {
       orientation = _props$orientation === void 0 ? 'horizontal' : _props$orientation,
       StepIconComponentProp = props.StepIconComponent,
       StepIconProps = props.StepIconProps,
-      other = _objectWithoutProperties(props, ["active", "alternativeLabel", "children", "classes", "className", "completed", "disabled", "error", "icon", "last", "optional", "orientation", "StepIconComponent", "StepIconProps"]);
+      other = _objectWithoutProperties(props, ["active", "alternativeLabel", "children", "classes", "className", "completed", "disabled", "error", "expanded", "icon", "last", "optional", "orientation", "StepIconComponent", "StepIconProps"]);
 
   var StepIconComponent = StepIconComponentProp;
 
@@ -129,13 +130,11 @@ var StepLabel = React.forwardRef(function StepLabel(props, ref) {
 process.env.NODE_ENV !== "production" ? StepLabel.propTypes = {
   /**
    * @ignore
-   * Sets the step as active. Is passed to child components.
    */
   active: PropTypes.bool,
 
   /**
    * @ignore
-   * Set internally by Stepper when it's supplied with the alternativeLabel prop.
    */
   alternativeLabel: PropTypes.bool,
 
@@ -157,7 +156,6 @@ process.env.NODE_ENV !== "production" ? StepLabel.propTypes = {
 
   /**
    * @ignore
-   * Mark the step as completed. Is passed to child components.
    */
   completed: PropTypes.bool,
 
@@ -171,6 +169,11 @@ process.env.NODE_ENV !== "production" ? StepLabel.propTypes = {
    * Mark the step as failed.
    */
   error: PropTypes.bool,
+
+  /**
+   * @ignore
+   */
+  expanded: PropTypes.bool,
 
   /**
    * Override the default label of the step icon.

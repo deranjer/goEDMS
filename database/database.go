@@ -286,7 +286,7 @@ func calculateHash(fileName string) (string, error) {
 	return fileHash, nil
 }
 
-//Calculate UUID for the incoming file
+//CalculateUUID for the incoming file
 func CalculateUUID(time time.Time) (ulid.ULID, error) {
 	entropy := ulid.Monotonic(rand.New(rand.NewSource(time.UnixNano())), 0)
 	newULID, err := ulid.New(ulid.Timestamp(time), entropy)

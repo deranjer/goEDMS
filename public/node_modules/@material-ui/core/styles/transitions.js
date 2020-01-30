@@ -5,7 +5,7 @@ var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefau
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = exports.isNumber = exports.isString = exports.formatMs = exports.duration = exports.easing = void 0;
+exports.default = exports.duration = exports.easing = void 0;
 
 var _objectWithoutProperties2 = _interopRequireDefault(require("@babel/runtime/helpers/objectWithoutProperties"));
 
@@ -40,21 +40,9 @@ var duration = {
 };
 exports.duration = duration;
 
-var formatMs = function formatMs(milliseconds) {
+function formatMs(milliseconds) {
   return "".concat(Math.round(milliseconds), "ms");
-};
-
-exports.formatMs = formatMs;
-
-var isString = function isString(value) {
-  return typeof value === 'string';
-};
-
-exports.isString = isString;
-
-var isNumber = function isNumber(value) {
-  return !isNaN(parseFloat(value));
-};
+}
 /**
  * @param {string|Array} props
  * @param {object} param
@@ -65,7 +53,6 @@ var isNumber = function isNumber(value) {
  */
 
 
-exports.isNumber = isNumber;
 var _default = {
   easing: easing,
   duration: duration,
@@ -81,6 +68,14 @@ var _default = {
         other = (0, _objectWithoutProperties2.default)(options, ["duration", "easing", "delay"]);
 
     if (process.env.NODE_ENV !== 'production') {
+      var isString = function isString(value) {
+        return typeof value === 'string';
+      };
+
+      var isNumber = function isNumber(value) {
+        return !isNaN(parseFloat(value));
+      };
+
       if (!isString(props) && !Array.isArray(props)) {
         console.error('Material-UI: argument "props" must be a string or Array.');
       }

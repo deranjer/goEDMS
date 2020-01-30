@@ -53,6 +53,7 @@ var StepContent = _react.default.forwardRef(function StepContent(props, ref) {
       classes = props.classes,
       className = props.className,
       completed = props.completed,
+      expanded = props.expanded,
       last = props.last,
       optional = props.optional,
       orientation = props.orientation,
@@ -61,7 +62,7 @@ var StepContent = _react.default.forwardRef(function StepContent(props, ref) {
       _props$transitionDura = props.transitionDuration,
       transitionDurationProp = _props$transitionDura === void 0 ? 'auto' : _props$transitionDura,
       TransitionProps = props.TransitionProps,
-      other = (0, _objectWithoutProperties2.default)(props, ["active", "alternativeLabel", "children", "classes", "className", "completed", "last", "optional", "orientation", "TransitionComponent", "transitionDuration", "TransitionProps"]);
+      other = (0, _objectWithoutProperties2.default)(props, ["active", "alternativeLabel", "children", "classes", "className", "completed", "expanded", "last", "optional", "orientation", "TransitionComponent", "transitionDuration", "TransitionProps"]);
 
   if (process.env.NODE_ENV !== 'production') {
     if (orientation !== 'vertical') {
@@ -79,7 +80,7 @@ var StepContent = _react.default.forwardRef(function StepContent(props, ref) {
     className: (0, _clsx.default)(classes.root, className, last && classes.last),
     ref: ref
   }, other), _react.default.createElement(TransitionComponent, (0, _extends2.default)({
-    in: active,
+    in: active || expanded,
     className: classes.transition,
     timeout: transitionDuration,
     unmountOnExit: true
@@ -123,6 +124,11 @@ process.env.NODE_ENV !== "production" ? StepContent.propTypes = {
   /**
    * @ignore
    */
+  expanded: _propTypes.default.bool,
+
+  /**
+   * @ignore
+   */
   last: _propTypes.default.bool,
 
   /**
@@ -138,6 +144,7 @@ process.env.NODE_ENV !== "production" ? StepContent.propTypes = {
 
   /**
    * The component used for the transition.
+   * [Follow this guide](/components/transitions/#transitioncomponent-prop) to learn more about the requirements for this component.
    */
   TransitionComponent: _propTypes.default.elementType,
 
@@ -153,7 +160,7 @@ process.env.NODE_ENV !== "production" ? StepContent.propTypes = {
   }), _propTypes.default.oneOf(['auto'])]),
 
   /**
-   * Props applied to the `Transition` element.
+   * Props applied to the [`Transition`](http://reactcommunity.org/react-transition-group/transition#Transition-props) element.
    */
   TransitionProps: _propTypes.default.object
 } : void 0;

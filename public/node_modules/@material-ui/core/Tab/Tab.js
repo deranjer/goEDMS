@@ -43,7 +43,6 @@ var styles = function styles(theme) {
     }, (0, _defineProperty2.default)(_extends2, theme.breakpoints.up('sm'), {
       padding: '6px 24px'
     }), (0, _defineProperty2.default)(_extends2, "overflow", 'hidden'), (0, _defineProperty2.default)(_extends2, "whiteSpace", 'normal'), (0, _defineProperty2.default)(_extends2, "textAlign", 'center'), (0, _defineProperty2.default)(_extends2, theme.breakpoints.up('sm'), {
-      fontSize: theme.typography.pxToRem(13),
       minWidth: 160
     }), _extends2)),
 

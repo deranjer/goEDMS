@@ -21,6 +21,8 @@ var _withStyles = _interopRequireDefault(require("../styles/withStyles"));
 
 var _Tablelvl2Context = _interopRequireDefault(require("../Table/Tablelvl2Context"));
 
+var _colorManipulator = require("../styles/colorManipulator");
+
 var styles = function styles(theme) {
   return {
     /* Styles applied to the root element. */
@@ -30,13 +32,11 @@ var styles = function styles(theme) {
       verticalAlign: 'middle',
       // We disable the focus ring for mouse, touch and keyboard users.
       outline: 0,
-      '&$selected': {
-        backgroundColor: theme.palette.type === 'light' ? 'rgba(0, 0, 0, 0.04)' // grey[100]
-        : 'rgba(255, 255, 255, 0.08)'
-      },
       '&$hover:hover': {
-        backgroundColor: theme.palette.type === 'light' ? 'rgba(0, 0, 0, 0.07)' // grey[200]
-        : 'rgba(255, 255, 255, 0.14)'
+        backgroundColor: theme.palette.action.hover
+      },
+      '&$selected,&$selected:hover': {
+        backgroundColor: (0, _colorManipulator.fade)(theme.palette.secondary.main, theme.palette.action.selectedOpacity)
       }
     },
 

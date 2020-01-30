@@ -3,11 +3,8 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = void 0;
+exports.default = ownerDocument;
 
 function ownerDocument(node) {
   return node && node.ownerDocument || document;
 }
-
-var _default = ownerDocument;
-exports.default = _default;

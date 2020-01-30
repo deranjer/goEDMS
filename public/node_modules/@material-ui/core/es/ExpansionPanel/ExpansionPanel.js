@@ -9,6 +9,7 @@ import Collapse from '../Collapse';
 import Paper from '../Paper';
 import withStyles from '../styles/withStyles';
 import ExpansionPanelContext from './ExpansionPanelContext';
+import useControlled from '../utils/useControlled';
 export const styles = theme => {
   const transition = {
     duration: theme.transitions.duration.shortest
@@ -96,30 +97,18 @@ const ExpansionPanel = React.forwardRef(function ExpansionPanel(props, ref) {
   } = props,
         other = _objectWithoutPropertiesLoose(props, ["children", "classes", "className", "defaultExpanded", "disabled", "expanded", "onChange", "square", "TransitionComponent", "TransitionProps"]);
 
-  const {
-    current: isControlled
-  } = React.useRef(expandedProp != null);
-  const [expandedState, setExpandedState] = React.useState(defaultExpanded);
-  const expanded = isControlled ? expandedProp : expandedState;
-
-  if (process.env.NODE_ENV !== 'production') {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    React.useEffect(() => {
-      if (isControlled !== (expandedProp != null)) {
-        console.error([`Material-UI: A component is changing ${isControlled ? 'a ' : 'an un'}controlled ExpansionPanel to be ${isControlled ? 'un' : ''}controlled.`, 'Elements should not switch from uncontrolled to controlled (or vice versa).', 'Decide between using a controlled or uncontrolled ExpansionPanel ' + 'element for the lifetime of the component.', 'More info: https://fb.me/react-controlled-components'].join('\n'));
-      }
-    }, [expandedProp, isControlled]);
-  }
-
+  const [expanded, setExpandedState] = useControlled({
+    controlled: expandedProp,
+    default: defaultExpanded,
+    name: 'ExpansionPanel'
+  });
   const handleChange = React.useCallback(event => {
-    if (!isControlled) {
-      setExpandedState(!expanded);
-    }
+    setExpandedState(!expanded);
 
     if (onChange) {
       onChange(event, !expanded);
     }
-  }, [expanded, isControlled, onChange]);
+  }, [expanded, onChange, setExpandedState]);
   const [summary, ...children] = React.Children.toArray(childrenProp);
   const contextValue = React.useMemo(() => ({
     expanded,
@@ -201,11 +190,12 @@ process.env.NODE_ENV !== "production" ? ExpansionPanel.propTypes = {
 
   /**
    * The component used for the collapse effect.
+   * [Follow this guide](/components/transitions/#transitioncomponent-prop) to learn more about the requirements for this component.
    */
   TransitionComponent: PropTypes.elementType,
 
   /**
-   * Props applied to the `Transition` element.
+   * Props applied to the [`Transition`](http://reactcommunity.org/react-transition-group/transition#Transition-props) element.
    */
   TransitionProps: PropTypes.object
 } : void 0;

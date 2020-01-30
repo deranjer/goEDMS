@@ -86,6 +86,7 @@ var Stepper = React.forwardRef(function Stepper(props, ref) {
 process.env.NODE_ENV !== "production" ? Stepper.propTypes = {
   /**
    * Set the active step (zero based index).
+   * Set to -1 to disable all the steps.
    */
   activeStep: PropTypes.number,
 

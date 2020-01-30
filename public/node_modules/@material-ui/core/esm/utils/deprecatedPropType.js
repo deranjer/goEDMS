@@ -1,4 +1,4 @@
-function deprecatedPropType(validator, reason) {
+export default function deprecatedPropType(validator, reason) {
   if (process.env.NODE_ENV === 'production') {
     return function () {
       return null;
@@ -16,5 +16,3 @@ function deprecatedPropType(validator, reason) {
     return null;
   };
 }
-
-export default deprecatedPropType;

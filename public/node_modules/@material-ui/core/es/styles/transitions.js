@@ -27,9 +27,10 @@ export const duration = {
   // recommended when something is leaving screen
   leavingScreen: 195
 };
-export const formatMs = milliseconds => `${Math.round(milliseconds)}ms`;
-export const isString = value => typeof value === 'string';
-export const isNumber = value => !isNaN(parseFloat(value));
+
+function formatMs(milliseconds) {
+  return `${Math.round(milliseconds)}ms`;
+}
 /**
  * @param {string|Array} props
  * @param {object} param
@@ -38,6 +39,7 @@ export const isNumber = value => !isNaN(parseFloat(value));
  * @param {string} param.easing
  * @param {number} param.delay
  */
+
 
 export default {
   easing,
@@ -51,6 +53,10 @@ export default {
           other = _objectWithoutPropertiesLoose(options, ["duration", "easing", "delay"]);
 
     if (process.env.NODE_ENV !== 'production') {
+      const isString = value => typeof value === 'string';
+
+      const isNumber = value => !isNaN(parseFloat(value));
+
       if (!isString(props) && !Array.isArray(props)) {
         console.error('Material-UI: argument "props" must be a string or Array.');
       }
