@@ -1,8 +1,0 @@
-https://github.com/oklog/ulid
-bleve
-rc-tree
-https://github.com/kingzbauer/docx/blob/master/docx.go
-https://github.com/knieriem/odf/blob/master/read.go
-
-convert PDF
-magick convert -density 150 -antialias "Basic_Test.pdf" -append -resize 1024x -quality 100 "Basic_Test_Output.png"

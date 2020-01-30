@@ -12,3 +12,6 @@ docker
 public/built/frontend-config.*
 database.txt
 goEDMS.db.lock
+.devcontainer
+.vscode
+notes.txt
