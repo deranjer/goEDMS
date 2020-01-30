@@ -1,6 +1,5 @@
 ﻿ingress
 goEDMSBuilds
-.goreleaser.yml
 simpleEDMSIndex.bleve
 temp
 documents
@@ -9,7 +8,7 @@ goEDMS.db
 public/node_modules
 public/dist
 dist
-public/built
 docker
+public/built/frontend-config.*
 database.txt
 goEDMS.db.lock

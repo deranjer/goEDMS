@@ -1,0 +1,81 @@
+# This is an example goreleaser.yaml file with some sane defaults.
+# Make sure to check the documentation at http://goreleaser.com
+before:
+  hooks:
+    # you may remove this if you don't use vgo
+    - go mod tidy
+    # you may remove this if you don't need go generate
+    - go generate ./...
+builds:
+- env:
+  - CGO_ENABLED=0
+  goos:
+    - linux
+    - windows
+    - darwin
+  goarch:
+    - amd64
+    - arm
+    - arm64
+archives:
+- replacements:
+    darwin: Darwin
+    linux: Linux
+    windows: Windows
+    386: i386
+    amd64: x86_64
+  format_overrides:
+    - goos: windows
+      format: zip
+  files:
+    - LICENSE
+    - README.md
+    - public/built/*
+nfpms:
+ -
+  id: goEDMS
+  package_name: goEDMS
+  vendor: deranjer
+  maintainer: deranjer
+  homepage: https://github.com/deranjer/goEDMS
+  description: Simple EDMS server and react client
+  license: MIT
+  formats:
+    - deb
+    - rpm 
+  dependencies:
+    - imagemagick
+    - tesseract-ocr
+  bindir: /opt/goEDMS
+  empty_folders:
+    - /opt/goEDMS/
+    - /opt/goEDMS/public/
+    - /opt/goEDMS/public/built/
+  files:
+    "dist-specific-files/Linux-systemd/goEDMS.service": "/etc/systemd/system/goEDMS.service"
+    "public/built/**": "/opt/goEDMS/public/built"
+    "LICENSE": "/opt/goEDMS/LICENSE"
+    "README.md": "/opt/goEDMS/README.md"
+  config_files:
+    "dist-specific-files/docker/serverConfig.toml": "/opt/goEDMS/serverConfig.toml"
+  scripts:
+    preinstall: "dist-specific-files/nfpms/pre-install.sh"
+    postinstall: "dist-specific-files/nfpms/post-install.sh"
+    postremove: "dist-specific-files/nfpms/post-remove.sh"
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ .Tag }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+    - '^docs:'
+    - '^test:'
+release:
+  draft: true
+  prerelease: true
+dockers:
+  - image_templates:
+    - deranjer/goedms
+
