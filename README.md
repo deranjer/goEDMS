@@ -1,4 +1,7 @@
 # goEDMS
+
+[![Join the chat at https://gitter.im/goEDMS/community](https://badges.gitter.im/goEDMS/community.svg)](https://gitter.im/goEDMS/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 golang/react EDMS for home users
 
 
