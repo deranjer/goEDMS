@@ -8,7 +8,6 @@ goEDMS.db
 public/node_modules
 public/dist
 dist
-docker
 public/built/frontend-config.*
 database.txt
 goEDMS.db.lock
