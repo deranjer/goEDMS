@@ -80,7 +80,7 @@ dockers:
     goos: linux
     goarch: amd64
     binaries:
-    - goEDMS_linux_amd64
+    - goEDMS
     image_templates:
     - "deranjer/goedms:latest"
     - "deranjer/goedms:v{{ .Major }}.{{ .Minor }}"
