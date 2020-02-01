@@ -75,18 +75,18 @@ changelog:
 release:
   draft: true
   prerelease: true
-dockers:
-  -
-    goos: linux
-    goarch: amd64
-    binaries:
-    - goEDMS
-    image_templates:
-    - "deranjer/goedms:latest"
-    - "deranjer/goedms:v{{ .Major }}.{{ .Minor }}"
-    dockerfile: Dockerfile
-    extra_files:
-    - LICENSE
-    - README.md
-    - public/built/
+# dockers:
+#   -
+#     goos: linux
+#     goarch: amd64
+#     binaries:
+#     - goEDMS
+#     image_templates:
+#     - "deranjer/goedms:latest"
+#     - "deranjer/goedms:v{{ .Major }}.{{ .Minor }}"
+#     dockerfile: Dockerfile
+#     extra_files:
+#     - LICENSE
+#     - README.md
+#     - public/built/
 
