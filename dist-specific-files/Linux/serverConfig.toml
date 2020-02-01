@@ -22,10 +22,10 @@
         
 [ocr]
     #Path to Tesseract binary (required for OCR) #Windows paths need to be formatted as such: "C:\\Program Files\\Tesseract-OCR\\tesseract.exe"
-    TesseractBin = "C:\\Program Files\\Tesseract-OCR\\tesseract.exe"
+    TesseractBin = "/usr/bin/tesseract"
     #Path to ImageMagick (required for OCR) 
     #IMPORTANT For linux, the MagickBin command needs to be to the "convert" binary, for Windows it is "magick.exe"
-    MagickBin = "C:\\Program Files\\ImageMagick-7.0.9-Q16\\magick.exe"
+    MagickBin = "/usr/bin/convert"
 
 [authentication]
     WebUIAuth = false # bool, if false no authentication is required for the webUI

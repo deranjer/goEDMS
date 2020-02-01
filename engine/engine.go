@@ -34,6 +34,16 @@ func (serverHandler *ServerHandler) ingressJobFunc(serverConfig config.ServerCon
 		Logger.Error("Error reading files in from ingress!")
 	}
 	for _, filePath := range documentPath {
+		Logger.Debug("Starting processing for file: ", filePath)
+		fileStats, err := os.Stat(filePath)
+		if err != nil {
+			Logger.Warnf("Unable to get information for file, won't process: %s: %s", filePath, err)
+			continue
+		}
+		if fileStats.IsDir() {
+			Logger.Info("Skipping Folder: ", filePath)
+			continue
+		}
 		serverHandler.ingressDocument(filePath, "ingress")
 	}
 	deleteEmptyIngressFolders(serverHandler.ServerConfig.IngressPath) //after ingress clean empty folders
@@ -46,7 +56,7 @@ func (serverHandler *ServerHandler) ingressDocument(filePath string, source stri
 		if err != nil {
 			fullText, err = serverHandler.convertToImage(filePath)
 			if err != nil {
-				Logger.Error("OCR Processing failed on file: ", filePath, err)
+				Logger.Errorf("OCR Processing failed on file: %s: %s", filePath, err)
 				return
 			}
 		}
@@ -71,7 +81,7 @@ func (serverHandler *ServerHandler) ingressDocument(filePath string, source stri
 func (serverHandler *ServerHandler) addDocumentToDatabase(filePath string, fullText string, source string) error {
 	document, err := database.AddNewDocument(filePath, fullText, serverHandler.DB, serverHandler.SearchDB) //Adds everything but the URL, that is added afterwards
 	if err != nil {
-		fmt.Println("UNABLE TO ADD NEW DOCUMENT", document, err) //TODO: Handle document that we were unable to add
+		Logger.Error("Failed to add document to database! ", document, err) //TODO: Handle document that we were unable to add
 		return err
 	}
 	documentURL := "/document/view/" + document.ULID.String()
@@ -92,6 +102,7 @@ func (serverHandler *ServerHandler) addDocumentToDatabase(filePath string, fullT
 			return err
 		}
 	}
+	Logger.Infof("Added %s to the database!", filePath)
 	return nil
 }
 
@@ -180,14 +191,14 @@ func pdfProcessing(file string) (*string, error) {
 	Logger.Debug("Working on current file: ", fileName)
 	pdfFile, result, err := pdf.Open(file)
 	if err != nil {
-		Logger.Error("Unable to open PDF", fileName)
+		Logger.Error("Unable to open PDF: ", fileName)
 		return nil, err
 	}
 	defer pdfFile.Close()
 	var buf bytes.Buffer
 	bytes, err := result.GetPlainText()
 	if err != nil {
-		Logger.Error("Unable to convert PDF to text", fileName)
+		Logger.Error("Unable to convert PDF to text: ", fileName)
 		return nil, err
 	}
 	buf.ReadFrom(bytes)
@@ -267,13 +278,14 @@ func (serverHandler *ServerHandler) ocrProcessing(imageName string) (*string, er
 	tesseractArgs := []string{imageName, "stdout"}
 	tesseractCMD := exec.Command(serverHandler.ServerConfig.TesseractPath, tesseractArgs...) //get the path to tesseract
 	output, err := tesseractCMD.Output()
+	Logger.Debugf("Tesseract Command Run was: %s", tesseractCMD.String())
 	if err != nil {
-		Logger.Error("Tesseract encountered error when attempting to OCR image: ", imageName, err)
+		Logger.Errorf("Tesseract encountered error when attempting to OCR image: %s: %s", imageName, err)
 		return nil, err
 	}
 	fullText = string(output)
 	if fullText == "" {
-		Logger.Error("OCR Result returned empty string... OCR'ing the document failed", imageName, err)
+		Logger.Error("OCR Result returned empty string... OCR'ing the document failed: %s: %s", imageName, err)
 		return nil, err
 	}
 	return &fullText, nil

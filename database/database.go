@@ -112,7 +112,7 @@ func AddNewDocument(filePath string, fullText string, db *storm.DB, searchDB ble
 	newDocument.ULID = newULID
 	newDocument.DocumentType = filepath.Ext(filePath)
 	newDocument.FullText = fullText
-
+	Logger.Debug("Adding full text for search to bleve: ", newDocument.FullText)
 	searchDB.Index(newDocument.ULID.String(), newDocument.FullText) //adding to bleve using the ULID as the ID and the fulltext TODO: Perhaps add entire struct this will give more search options
 	if err != nil {
 		Logger.Error("Unable to index Document in Bleve Search", newDocument.Name, err)

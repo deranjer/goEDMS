@@ -57,7 +57,7 @@ nfpms:
     "LICENSE": "/opt/goEDMS/LICENSE"
     "README.md": "/opt/goEDMS/README.md"
   config_files:
-    "dist-specific-files/docker/serverConfig.toml": "/opt/goEDMS/serverConfig.toml"
+    "dist-specific-files/Linux/serverConfig.toml": "/opt/goEDMS/serverConfig.toml"
   scripts:
     preinstall: "dist-specific-files/nfpms/pre-install.sh"
     postinstall: "dist-specific-files/nfpms/post-install.sh"
@@ -76,15 +76,16 @@ release:
   draft: true
   prerelease: true
 dockers:
-  - goos: linux
-  - goarch: amd64
-  - binaries:
-    - goEDMS_linux_amd64
-  - image_templates:
+  -
+#    goos: linux
+#    goarch: amd64
+#    binaries:
+#    - goEDMS_linux_amd64
+    image_templates:
     - "deranjer/goedms:latest"
-    - "deranjer/goedms:v{{ .Major }}.{{ .Minor }}"
-  - dockerfile: Dockerfile
-  - extra_files:
+#    - "deranjer/goedms:v{{ .Major }}.{{ .Minor }}"
+#    dockerfile: Dockerfile
+    extra_files:
     - LICENSE
     - README.md
     - public/built/

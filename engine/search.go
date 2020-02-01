@@ -1,6 +1,8 @@
 package engine
 
 import (
+	"strings"
+
 	"github.com/asdine/storm"
 	"github.com/blevesearch/bleve"
 	"github.com/deranjer/goEDMS/database"
@@ -34,7 +36,8 @@ func SearchExactSingleTerm(term string, index bleve.Index) (*bleve.SearchResult,
 
 //SearchGeneralPhrase is a "fuzzy" search that is very inclusive
 func SearchGeneralPhrase(phrase string, index bleve.Index) (*bleve.SearchResult, error) {
-	phraseQuery := bleve.NewPrefixQuery(phrase)
+	phraseQueryLower := strings.ToLower(phrase) //convert to lowercase because bleve is super fucking picky
+	phraseQuery := bleve.NewPrefixQuery(phraseQueryLower)
 	searchQuery := bleve.NewSearchRequest(phraseQuery)
 	searchResultsQuery, err := index.Search(searchQuery)
 	Logger.Debug("Search Results for term: ", searchResultsQuery)

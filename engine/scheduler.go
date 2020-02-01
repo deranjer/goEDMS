@@ -21,10 +21,9 @@ func (serverHandler *ServerHandler) InitializeSchedules(db *storm.DB, searchDB b
 	c := cron.New(cron.WithLogger(cron.VerbosePrintfLogger(Logger)))
 	var ingressJob cron.Job
 	ingressJob = cron.FuncJob(func() { serverHandler.ingressJobFunc(serverConfig, db, searchDB) })
-	ingressJob = cron.NewChain(cron.SkipIfStillRunning(cron.DefaultLogger)).Then(ingressJob)
+	ingressJob = cron.NewChain(cron.SkipIfStillRunning(cron.DefaultLogger)).Then(ingressJob) //ensure we don't kick off another if old one is still running
 	c.AddJob(fmt.Sprintf("@every %dm", serverConfig.IngressInterval), ingressJob)
 	//c.AddJob("@every 1m", ingressJob)
 	Logger.Infof("Adding Ingress Job that runs every %dm", serverConfig.IngressInterval)
 	c.Start()
-
 }
