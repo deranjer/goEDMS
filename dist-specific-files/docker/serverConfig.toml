@@ -5,11 +5,11 @@
     APIURL = "192.168.1.8:8000" #This is for EXTREME edge cases where you want to manually force the API URL, like with Docker, usually leave blank
 
 [documentLibrary]     #Relative or absolute path accepted, the server will convert any relative path to an absolute path.
-    DocumentFileSystemLocation = 'config/documents' #Location to store documents
+    DocumentFileSystemLocation = 'documents' #Location to store documents
     DefaultNewDocumentFolder = 'New' #default folder that ingressed documents will be placed in (inside the Document library), for multiple folders deep can do '2020/New'
 
 [ingress]
-    IngressPath = 'config/ingress' #default path that the server will scan for new documents
+    IngressPath = 'ingress' #default path that the server will scan for new documents
     [ingress.scheduling]
         #number of minutes between scans of the ingress folder
         IngressInterval = 10
@@ -43,7 +43,7 @@
 [logging]
     Level = "debug" #debug, info, warn, error, fatal
     OutputPath = "file" #file or stdout
-    LogFileLocation = "config/goedms.log"
+    LogFileLocation = "goedms.log"
 
 [notifications]
     PushBulletToken = "" #add your pushbullet api token here to notify of ingress completion to pushbullet

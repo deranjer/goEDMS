@@ -12,7 +12,7 @@
     IngressPath = 'ingress' #default path that the server will scan for new documents
     [ingress.scheduling]
         #number of minutes between scans of the ingress folder
-        IngressInterval = 2
+        IngressInterval = 10
     [ingress.completed]
         #If True will delete files from ingress folder after processed (will leave ones if they produce error), if false will move to another folder
         IngressDeleteOnProcess = false 
