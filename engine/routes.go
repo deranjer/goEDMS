@@ -128,7 +128,8 @@ func (serverHandler *ServerHandler) UploadDocuments(context echo.Context) error 
 		return err
 	}
 	defer file.Close()
-	path := filepath.ToSlash(serverHandler.ServerConfig.DocumentPath + "/" + uploadPath + fileHeader.Filename)
+	//Upload it to the ingress folder so if there is an issue it will stick there and not in the documents folder which will cause issues.
+	path := filepath.ToSlash(serverHandler.ServerConfig.IngressPath + "/" + uploadPath + fileHeader.Filename)
 	body, err := ioutil.ReadAll(file) //get the file, write it to the filesystem
 	err = ioutil.WriteFile(path, body, 0644)
 	if err != nil {

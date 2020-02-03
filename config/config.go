@@ -103,6 +103,11 @@ func SetupServer() (ServerConfig, *lecho.Logger) {
 	if err != nil {
 		logger.Error("Failed creating absolute path for tesseract binary", err)
 	}
+	logger.Info("Checking executable paths...")
+	err = checkExecutables(serverConfigLive.MagickPath, serverConfigLive.TesseractPath)
+	if err != nil {
+		logger.Error("An executable failed, will continue but most likely OCR will not work...")
+	}
 	serverConfigLive.UseReverseProxy = viper.GetBool("reverseProxy.ProxyEnabled")
 	serverConfigLive.BaseURL = viper.GetString("reverseProxy.BaseURL")
 	os.MkdirAll(serverConfigLive.NewDocumentFolder, os.ModePerm)
@@ -202,4 +207,18 @@ func setupLogging() *lecho.Logger {
 		lecho.WithTimestamp(),
 	)
 	return logger
+}
+
+func checkExecutables(magickPath string, tesseractPath string) error { //TODO: run test commands?
+	_, err := os.Stat(magickPath)
+	if err != nil {
+		Logger.Error("Cannot find magick executable at location specified: ", magickPath)
+		return err
+	}
+	_, err = os.Stat(tesseractPath)
+	if err != nil {
+		Logger.Error("Cannot find tesseractPath executable at location specified: ", tesseractPath)
+		return err
+	}
+	return nil
 }

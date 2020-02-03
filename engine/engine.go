@@ -228,7 +228,7 @@ func (serverHandler *ServerHandler) convertToImage(fileName string) (*string, er
 	imageName = filepath.Join("temp", imageName)
 	imageName, err = filepath.Abs(imageName)
 	if err != nil {
-		Logger.Error("Unable to edit absolute path string for temporary image for OCR: ", fileName, err)
+		Logger.Errorf("Unable to edit absolute path string for temporary image for OCR: %s %s ", fileName, err)
 		return nil, err
 	}
 	err = os.MkdirAll(filepath.Dir(imageName), os.ModePerm)
@@ -252,18 +252,22 @@ func (serverHandler *ServerHandler) convertToImage(fileName string) (*string, er
 		convertArgs := []string{"-density", "150", "-antialias", fileName, "-append", "-resize", "1024x", "-quality", "100", imageName}
 		pdfConvertCmd = exec.Command(serverHandler.ServerConfig.MagickPath, convertArgs...)
 	}
-	output, err := pdfConvertCmd.Output()
+	var stdBuffer bytes.Buffer
+	mw := io.MultiWriter(os.Stdout, &stdBuffer)
+	pdfConvertCmd.Stdout = mw
+	pdfConvertCmd.Stderr = mw
+	err = pdfConvertCmd.Run()
 	if err != nil {
-		Logger.Error("Unable to convert PDF Using Magick: ", fileName, err)
+		Logger.Errorf("Unable to convert PDF Using Magick: %s %s", fileName, err)
+		Logger.Errorf("Full output: ", stdBuffer.String())
 		return nil, err
 	}
-	fmt.Println("Outputting image to ", imageName)
-	Logger.Debug("Output from pdfConvertCmd ", string(output))
+	Logger.Debugf("Output from magick: %s", stdBuffer.String())
 	cleanArgs := []string{"convert", imageName, "-auto-orient", "-deskew", "40%", "-despeckle", imageName} //cleaning the resulting image
 	imageCleanCmd := exec.Command(serverHandler.ServerConfig.MagickPath, cleanArgs...)
-	output, err = imageCleanCmd.Output()
+	err = imageCleanCmd.Run()
 	if err != nil {
-		Logger.Error("Magick was unable to clean the image for some reason... skipping this file for now: ", fileName, err)
+		Logger.Errorf("Magick was unable to clean the image for some reason... skipping this file for now: %s %s", fileName, err)
 		return nil, err
 	}
 	fullText, err := serverHandler.ocrProcessing(imageName)
@@ -275,17 +279,38 @@ func (serverHandler *ServerHandler) convertToImage(fileName string) (*string, er
 
 func (serverHandler *ServerHandler) ocrProcessing(imageName string) (*string, error) {
 	var fullText string
-	tesseractArgs := []string{imageName, "stdout"}
+	var err error
+	textFileName := filepath.Base(imageName)                                    //creating the path for the .txt that tesseract will output with the OCR results.
+	textFileName = strings.TrimSuffix(textFileName, filepath.Ext(textFileName)) //just get the name, no extension
+	fullpath := filepath.Join("temp", textFileName)
+	fullpath, err = filepath.Abs(fullpath)
+	if err != nil {
+		Logger.Error("Unable to create full path for temp OCR File: %s", fullpath)
+	}
+	textFileName = filepath.Clean(fullpath)
+	/* 	tempOCRFile, err := os.Create(fmt.Sprintf("temp/%s", imageName))
+	   	if err != nil {
+	   		Logger.Errorf("Unable to create temp file: temp/%s: %s", imageName, err)
+	   		return nil, err
+	   	} */
+	tesseractArgs := []string{imageName, textFileName}                                       //outputting ocr to a txt file
 	tesseractCMD := exec.Command(serverHandler.ServerConfig.TesseractPath, tesseractArgs...) //get the path to tesseract
-	output, err := tesseractCMD.Output()
+	var stdBuffer bytes.Buffer
+	mw := io.MultiWriter(os.Stdout, &stdBuffer)
+
+	tesseractCMD.Stdout = mw
+	tesseractCMD.Stderr = mw
+
+	err = tesseractCMD.Run()
 	Logger.Debugf("Tesseract Command Run was: %s", tesseractCMD.String())
 	if err != nil {
-		Logger.Errorf("Tesseract encountered error when attempting to OCR image: %s: %s", imageName, err)
+		Logger.Errorf("Tesseract encountered error when attempting to OCR image: %s: detail: %s", imageName, stdBuffer.String())
 		return nil, err
 	}
-	fullText = string(output)
+	fileBytes, err := ioutil.ReadFile(textFileName + ".txt")
+	fullText = string(fileBytes)
 	if fullText == "" {
-		Logger.Error("OCR Result returned empty string... OCR'ing the document failed: %s: %s", imageName, err)
+		Logger.Errorf("OCR Result returned empty string... OCR'ing the document failed: %s: %s", imageName, err)
 		return nil, err
 	}
 	return &fullText, nil
