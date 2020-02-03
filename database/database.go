@@ -37,7 +37,16 @@ var Logger *lecho.Logger
 
 //SetupDatabase initializes the storm/bbolt database
 func SetupDatabase() (db *storm.DB) {
-	db, err := storm.Open("goEDMS.db")
+	_, err := os.Stat("databases")
+	if err != nil {
+		if os.IsNotExist(err) {
+			err := os.Mkdir("databases", os.ModePerm)
+			if err != nil {
+				Logger.Fatal("Unable to create folder for databases: ", err)
+			}
+		}
+	}
+	db, err = storm.Open(filepath.Clean("databases/goEDMS.db"))
 	if err != nil {
 		Logger.Fatal("Unable to create/open database!", err)
 	}

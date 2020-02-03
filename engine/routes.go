@@ -130,9 +130,21 @@ func (serverHandler *ServerHandler) UploadDocuments(context echo.Context) error 
 	defer file.Close()
 	//Upload it to the ingress folder so if there is an issue it will stick there and not in the documents folder which will cause issues.
 	path := filepath.ToSlash(serverHandler.ServerConfig.IngressPath + "/" + uploadPath + fileHeader.Filename)
+	_, err = os.Stat(filepath.Dir(path)) //since this is the ingress folder we MAY need to create the directory path.
+	if err != nil {
+		if os.IsNotExist(err) {
+			err := os.MkdirAll(filepath.Dir(path), os.ModePerm)
+			if err != nil {
+				Logger.Errorf("Unable to create filepath for upload: %s %s ", err, path)
+				return err
+			}
+		}
+	}
+	Logger.Debug("Creating path for file upload to ingress: ", filepath.Dir(path))
 	body, err := ioutil.ReadAll(file) //get the file, write it to the filesystem
 	err = ioutil.WriteFile(path, body, 0644)
 	if err != nil {
+		Logger.Errorf("Unable to write uploaded file: %s : %s", path, err)
 		return err
 	}
 	serverHandler.ingressDocument(path, "upload") //ingress the document into the database
