@@ -1,0 +1,19 @@
+version: "3"
+ 
+services:
+    goedms:
+      image: deranjer/goedms:latest
+      container_name: goedms
+      ports:
+        - 8000:8000
+      volumes:
+        - /sourcedir/documents:/opt/goEDMS/documents
+        - /sourcedir/done:/opt/goEDMS/done
+        - /sourcedir/tmp:/opt/goEDMS/temp
+        - /sourcedir/ingress:/opt/goEDMS/ingress
+        - /sourcedir/serverConfig.toml:/opt/goEDMS/serverConfig.toml
+        - /sourcedir/goedms.log:/opt/goEDMS/goedms.log
+        - /sourcedir/db:/opt/goEDMS/databases
+      environment:
+        - UID=UID
+        - GID=GID
