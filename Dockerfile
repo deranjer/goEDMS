@@ -16,6 +16,8 @@ RUN chmod +x /opt/goEDMS/goEDMS && \
 # Stage 2
 FROM scratch
 COPY --from=build / /
+LABEL Author="deranjer"
+LABEL name="goEDMS"
 EXPOSE 8000
 WORKDIR /opt/goEDMS
 ENTRYPOINT [ "/opt/goEDMS/goEDMS" ]
