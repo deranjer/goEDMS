@@ -1,7 +1,5 @@
 # Stage 1
 FROM alpine:latest as build
-LABEL Author="deranjer"
-LABEL name="goEDMS"
 RUN mkdir -p /opt/goEDMS/public/built && \
   mkdir /opt/goEDMS/config && \
   adduser -S goEDMS && addgroup -S goEDMS
