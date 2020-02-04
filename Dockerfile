@@ -2,7 +2,6 @@
 FROM alpine:latest as build
 LABEL Author="deranjer"
 LABEL name="goEDMS"
-EXPOSE 8000
 RUN mkdir -p /opt/goEDMS/public/built && \
   mkdir /opt/goEDMS/config && \
   adduser -S goEDMS && addgroup -S goEDMS
@@ -17,6 +16,8 @@ RUN chmod +x /opt/goEDMS/goEDMS && \
 # Stage 2
 FROM scratch
 COPY --from=build / /
+EXPOSE 8000
+WORKDIR /opt/goEDMS
 ENTRYPOINT [ "/opt/goEDMS/goEDMS" ]
 
 #docker build -t deranjer/goedms:latest .
