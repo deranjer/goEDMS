@@ -1,20 +1,23 @@
-FROM debian:latest
+# Stage 1
+FROM alpine:latest as build
+RUN mkdir -p /opt/goEDMS/public/built && \
+  mkdir /opt/goEDMS/config && \
+  adduser -S goEDMS && addgroup -S goEDMS
+WORKDIR /opt/goEDMS
+COPY LICENSE README.md /opt/goEDMS/config/
+COPY public/built/* /opt/goEDMS/public/built/
+COPY dist/goEDMS_linux_amd64/goEDMS /opt/goEDMS/goEDMS
+RUN chmod +x /opt/goEDMS/goEDMS && \
+  chown -R goEDMS:goEDMS /opt/goEDMS/ && \
+  apk update && apk add imagemagick tesseract-ocr
+
+# Stage 2
+FROM scratch
+COPY --from=build / /
 LABEL Author="deranjer"
 LABEL name="goEDMS"
 EXPOSE 8000
-RUN mkdir /opt/goEDMS
-RUN mkdir -p /opt/goEDMS/public/built
-RUN mkdir /opt/goEDMS/config
-RUN useradd goEDMS
 WORKDIR /opt/goEDMS
-COPY LICENSE /opt/goEDMS/config/LICENSE
-COPY README.md /opt/goEDMS/config/README.md
-COPY public/built/* /opt/goEDMS/public/built/
-COPY dist/goEDMS_linux_amd64/goEDMS /opt/goEDMS/goEDMS
-RUN chmod +x /opt/goEDMS/goEDMS
-RUN chown -R goEDMS:goEDMS /opt/goEDMS/
-RUN apt-get update && apt-get upgrade -y
-RUN apt-get -y install imagemagick tesseract-ocr
 ENTRYPOINT [ "/opt/goEDMS/goEDMS" ]
 
 #docker build -t deranjer/goedms:latest .
