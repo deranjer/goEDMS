@@ -25,15 +25,15 @@ func (serverHandler *ServerHandler) ingressJobFunc(serverConfig config.ServerCon
 		Logger.Error("Error reading config from database: ", err)
 	}
 	Logger.Info("Starting Ingress Job on folder:", serverConfig.IngressPath)
-	var documentPath []string
+	var ingressPath []string
 	err = filepath.Walk(serverConfig.IngressPath, func(path string, info os.FileInfo, err error) error {
-		documentPath = append(documentPath, path)
+		ingressPath = append(ingressPath, path)
 		return nil
 	})
 	if err != nil {
 		Logger.Error("Error reading files in from ingress!")
 	}
-	for _, filePath := range documentPath {
+	for _, filePath := range ingressPath {
 		Logger.Debug("Starting processing for file: ", filePath)
 		fileStats, err := os.Stat(filePath)
 		if err != nil {
@@ -44,12 +44,16 @@ func (serverHandler *ServerHandler) ingressJobFunc(serverConfig config.ServerCon
 			Logger.Info("Skipping Folder: ", filePath)
 			continue
 		}
+		if filePath == serverConfig.IngressPath {
+			Logger.Info("Skipping ingress Folder: ", filePath)
+			continue
+		}
 		serverHandler.ingressDocument(filePath, "ingress")
 	}
 	deleteEmptyIngressFolders(serverHandler.ServerConfig.IngressPath) //after ingress clean empty folders
 }
 
-func (serverHandler *ServerHandler) ingressDocument(filePath string, source string) {
+func (serverHandler *ServerHandler) ingressDocument(filePath string, source string) { //source is either from ingress folder or from upload
 	switch filepath.Ext(filePath) {
 	case ".pdf":
 		fullText, err := pdfProcessing(filePath)
@@ -107,19 +111,30 @@ func (serverHandler *ServerHandler) addDocumentToDatabase(filePath string, fullT
 }
 
 func deleteEmptyIngressFolders(path string) {
-	filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
-		f, err := os.Open(path)
+	Logger.Info("Running cleanup on ingress folder: ", path)
+	err := filepath.Walk(path, func(currentFile string, info os.FileInfo, err error) error {
+		f, err := os.Open(currentFile)
 		if err != nil {
 			return err
 		}
 		defer f.Close()
-		_, err = f.Readdirnames(1)
-		if err == io.EOF {
-			os.Remove(path)
+		Logger.Debug("Checking on path: ", currentFile)
+		if path == currentFile {
+			Logger.Debug("Skipping root dir: ", path)
 			return nil
 		}
-		return err
+
+		_, err = f.Readdirnames(1)
+		if err == io.EOF {
+			Logger.Debug("Removing Empty Folder: ", currentFile)
+			os.RemoveAll(currentFile)
+			return nil
+		}
+		return nil
 	})
+	if err != nil {
+		Logger.Errorf("Error cleaning ingress folder: %s:%s", path, err)
+	}
 }
 
 //DeleteFile deletes a folder (or file) and everything in that folder
