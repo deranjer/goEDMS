@@ -101,20 +101,23 @@ const HomePage = props => {
     }
 
     const checkData = (data) => {
-        if (data[0] == null) {
+        if (data.fileSystem[0] == null) {
             console.log("Undefined Data! ", data[0])
             toast.warn("No Results found! " + props.searchTerm);
             return
+        }
+        if (data.error != "") {
+            toast.error("Error when generating filesystem! " + data.error)
         }
         if (props.searchTerm.length > 0) {
             toast.success("Results Found! " + props.searchTerm);
         }
         console.log("HERE IS DATA: ", data)
-        setCurrentFolder(data[0].id) //folder we are in
-        setFolderSystem([data[0]]) //folder trail at top
-        setFullFileSystem(data) 
+        setCurrentFolder(data.fileSystem[0].id) //folder we are in
+        setFolderSystem([data.fileSystem[0]]) //folder trail at top
+        setFullFileSystem(data.fileSystem) 
         console.log("Full file system in check data: ", fullFileSystem)
-        getFiles(data[0], data)
+        getFiles(data.fileSystem[0], data.fileSystem)
     }
 
       const getFiles = (folder, files) => {

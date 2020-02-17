@@ -39,6 +39,11 @@ type ServerHandler struct {
 	Parent       *Node   `json:"-"`
 } */
 
+type fullFileSystem struct {
+	FileSystem []fileTreeStruct `json:"fileSystem"`
+	Error      string           `json:"error"`
+}
+
 type fileTreeStruct struct {
 	ID          string   `json:"id"`
 	ULIDStr     string   `json:"ulid"`
@@ -285,12 +290,12 @@ func convertDocumentsToFileTree(documents []database.Document) (fullFileTree *[]
 	return &fileTree, nil
 }
 
-func fileTree(rootPath string, db *storm.DB) (fileTree *[]fileTreeStruct, err error) {
+func fileTree(rootPath string, db *storm.DB) (fileTree *fullFileSystem, err error) {
 	absRoot, err := filepath.Abs(rootPath)
 	if err != nil {
 		return nil, err
 	}
-	var fullFileTree []fileTreeStruct
+	var fullFileTree fullFileSystem
 	var currentFile fileTreeStruct
 
 	walkFunc := func(path string, info os.FileInfo, err error) error {
@@ -301,7 +306,7 @@ func fileTree(rootPath string, db *storm.DB) (fileTree *[]fileTreeStruct, err er
 		currentFile.Name = info.Name()
 		currentFile.FullPath = path
 
-		for _, fileElement := range fullFileTree { //Find the parentID
+		for _, fileElement := range fullFileTree.FileSystem { //Find the parentID
 			if fileElement.FullPath == filepath.Dir(path) {
 				currentFile.ParentID = fileElement.ID
 			}
@@ -333,14 +338,14 @@ func fileTree(rootPath string, db *storm.DB) (fileTree *[]fileTreeStruct, err er
 
 			document, err := database.FetchDocumentFromPath(path, db)
 			if err != nil {
-				return err
+				fullFileTree.Error = fmt.Sprintf("Document found in directory without database entry, please investigate: %s", path)
 			}
 			currentFile.FileURL = document.URL
 			currentFile.ID = document.ULID.String()
 			currentFile.ULIDStr = document.ULID.String()
 		}
 
-		fullFileTree = append(fullFileTree, currentFile)
+		fullFileTree.FileSystem = append(fullFileTree.FileSystem, currentFile)
 		return nil
 	}
 	err = filepath.Walk(absRoot, walkFunc)
