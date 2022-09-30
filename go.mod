@@ -20,8 +20,8 @@ require (
 	github.com/facebookgo/stack v0.0.0-20160209184415-751773369052 // indirect
 	github.com/facebookgo/subset v0.0.0-20150612182917-8dac2c3c4870 // indirect
 	github.com/jmhodges/levigo v1.0.0 // indirect
-	github.com/labstack/echo/v4 v4.1.10
-	github.com/labstack/gommon v0.3.0
+	github.com/labstack/echo/v4 v4.9.0
+	github.com/labstack/gommon v0.3.1
 	github.com/ledongthuc/pdf v0.0.0-20190830105003-8ac343ec9fdd
 	github.com/oklog/ulid/v2 v2.0.2
 	github.com/remyoudompheng/bigfft v0.0.0-20190728182440-6a916e37a237 // indirect
@@ -34,8 +34,6 @@ require (
 	github.com/tecbot/gorocksdb v0.0.0-20191217155057-f0fad39f321c // indirect
 	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect
 	github.com/ziflex/lecho/v2 v2.0.0
-	golang.org/x/net v0.0.0-20190628185345-da137c7871d7 // indirect
-	golang.org/x/sys v0.0.0-20191002091554-b397fe3ad8ed // indirect
 )
 
 replace github.com/deranjer/goEDMS => ../goEDMS
